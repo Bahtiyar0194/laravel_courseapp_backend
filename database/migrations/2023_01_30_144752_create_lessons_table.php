@@ -23,8 +23,6 @@ class CreateLessonsTable extends Migration
             $table->foreign('lesson_type_id')->references('lesson_type_id')->on('types_of_lessons');
             $table->integer('show_status_id')->default(1)->unsigned();
             $table->foreign('show_status_id')->references('show_status_id')->on('show_status');
-            $table->integer('verification_status_id')->default(1)->unsigned();
-            $table->foreign('verification_status_id')->references('verification_status_id')->on('verification_status');
             $table->timestamps();
             $table->integer('sort_num')->nullable();
         });

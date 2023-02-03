@@ -82,6 +82,10 @@ return [
         'string' => 'The :attribute may not be greater than :max characters.',
         'array' => 'The :attribute may not have more than :max items.',
     ],
+
+    // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
+    'max_mb' => 'The :attribute may not be greater than :max_mb megabytes.',
+
     'mimes' => 'The :attribute must be a file of type: :values.',
     'mimetypes' => 'The :attribute must be a file of type: :values.',
     'min' => [
@@ -98,7 +102,7 @@ return [
     'present' => 'The :attribute field must be present.',
     'regex' => 'The :attribute format is invalid.',
     'required' => 'The :attribute field is required.',
-    'required_if' => 'The :attribute field is required when :other is :value.',
+    'required_if' => 'The :attribute field is required',
     'required_unless' => 'The :attribute field is required unless :other is in :values.',
     'required_with' => 'The :attribute field is required when :values is present.',
     'required_with_all' => 'The :attribute field is required when :values are present.',
@@ -131,8 +135,11 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'video_file' => [
+            'required_if' => 'Please, attach a video file',
+        ],
+        'video_link' => [
+            'required_if' => 'Enter the link',
         ],
     ],
 
@@ -153,6 +160,10 @@ return [
         'course_category_id'    => 'course category',
         'course_language_id'    => 'course language',
         'course_cost'           => 'course cost',
+        'course_poster'         => 'course poster',
+
+        'lesson_name'           => 'lesson name',
+        'lesson_description'    => 'lesson description',
     ],
 
 ];

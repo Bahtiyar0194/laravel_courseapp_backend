@@ -77,10 +77,14 @@ return [
     ],
     'max'                  => [
         'numeric' => ' :attribute мәні :max мәнінен көп болмауы керек.',
-        'file'    => ' :attribute мәні :max килобайттан көп болмауы керек.',
+        'file'    => ' :attribute :max килобайттан көп болмауы керек.',
         'string'  => ' :attribute тармағы :max таңбадан ұзын болмауы керек.',
         'array'   => ' :attribute жиымының құрамы :max элементтен аспауы керек.',
     ],
+
+    // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
+    'max_mb' => ':attribute :max_mb мегабайттан көп болмауы керек.',
+
     'mimes'                => ' :attribute мынадай файл түрі болуы керек: :values.',
     'mimetypes'            => ' :attribute мынадай файл түрі болуы керек: :values.',
     'min'                  => [
@@ -97,7 +101,7 @@ return [
     'present'              => ' :attribute болуы керек.',
     'regex'                => ' :attribute пішімі жарамсыз.',
     'required'             => ' :attribute толық болуы керек.',
-    'required_if'          => ' :attribute жолы :other мәні :value болған кезде толтырылуы керек.',
+    'required_if'          => ' :attribute толық болуы керек.',
     'required_unless'      => ' :attribute жолы :other мәні :values ішінде болмағанда толтырылуы керек.',
     'required_with'        => ' :attribute жолы :values болғанда толтырылуы керек.',
     'required_with_all'    => ' :attribute жолы :values болғанда толтырылуы керек.',
@@ -130,8 +134,11 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'video_file' => [
+            'required_if' => 'Бейне файлды тіркеңіз',
+        ],
+        'video_link' => [
+            'required_if' => 'Сілтемені енгізіңіз',
         ],
     ],
 
@@ -159,6 +166,11 @@ return [
         'course_category_id'    => 'Курстың санаты',
         'course_language_id'    => 'Курс тілі',
         'course_cost'           => 'Курстың бағасы',
+        'course_poster'         => 'Курстың мұқабасы',
+
+        'lesson_name'           => 'Сабақтың аты',
+        'lesson_description'    => 'Сабақтың қысқаша сипаттамасы',
+
         'flat'                  => 'Пәтер',
         'house'                 => 'Үй',
         'street'                => 'Көше',

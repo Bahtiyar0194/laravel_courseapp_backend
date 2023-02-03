@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseCategoryController;
+use App\Http\Controllers\LessonController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +60,7 @@ Route::group([
         'prefix' => 'lessons'
     ], function ($router) {
         Route::group(['middleware' => ['auth:sanctum']], function () {
+            Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
             Route::post('/create', [LessonController::class, 'create']);
         });
     });

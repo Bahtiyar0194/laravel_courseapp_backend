@@ -25,7 +25,7 @@ return [
     'before_or_equal'      => 'В поле :attribute должна быть дата раньше или равняться :date.',
     'between'              => [
         'numeric' => 'Поле :attribute должно быть между :min и :max.',
-        'file'    => 'Размер файла в поле :attribute должен быть между :min и :max Килобайт(а).',
+        'file'    => 'Размер файла в поле :attribute должен быть между :min и :max килобайт(а).',
         'string'  => 'Количество символов в поле :attribute должно быть между :min и :max.',
         'array'   => 'Количество элементов в поле :attribute должно быть между :min и :max.',
     ],
@@ -46,13 +46,13 @@ return [
     'filled'               => 'Поле :attribute обязательно для заполнения.',
     'gt'                   => [
         'numeric' => 'Поле :attribute должно быть больше :value.',
-        'file'    => 'Размер файла в поле :attribute должен быть больше :value Килобайт(а).',
+        'file'    => 'Размер файла в поле :attribute должен быть больше :value килобайт(а).',
         'string'  => 'Количество символов в поле :attribute должно быть больше :value.',
         'array'   => 'Количество элементов в поле :attribute должно быть больше :value.',
     ],
     'gte'                  => [
         'numeric' => 'Поле :attribute должно быть :value или больше.',
-        'file'    => 'Размер файла в поле :attribute должен быть :value Килобайт(а) или больше.',
+        'file'    => 'Размер файла в поле :attribute должен быть :value килобайт(а) или больше.',
         'string'  => 'Количество символов в поле :attribute должно быть :value или больше.',
         'array'   => 'Количество элементов в поле :attribute должно быть :value или больше.',
     ],
@@ -66,7 +66,7 @@ return [
     'json'                 => 'Поле :attribute должно быть JSON строкой.',
     'lt'                   => [
         'numeric' => 'Поле :attribute должно быть меньше :value.',
-        'file'    => 'Размер файла в поле :attribute должен быть меньше :value Килобайт(а).',
+        'file'    => 'Размер файла в поле :attribute должен быть меньше :value килобайт(а).',
         'string'  => 'Количество символов в поле :attribute должно быть меньше :value.',
         'array'   => 'Количество элементов в поле :attribute должно быть меньше :value.',
     ],
@@ -78,15 +78,19 @@ return [
     ],
     'max'                  => [
         'numeric' => 'Поле :attribute не может быть больше :max.',
-        'file'    => 'Размер файла в поле :attribute не может быть больше :max Килобайт(а).',
+        'file'    => 'Размер файла в поле :attribute не может быть больше :max килобайт(а).',
         'string'  => 'Количество символов в поле :attribute не может превышать :max.',
         'array'   => 'Количество элементов в поле :attribute не может превышать :max.',
     ],
+
+    // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
+    'max_mb' => 'Размер файла не может быть больше :max_mb мегабайт(а).',
+
     'mimes'                => 'Поле :attribute должно быть файлом одного из следующих типов: :values.',
     'mimetypes'            => 'Поле :attribute должно быть файлом одного из следующих типов: :values.',
     'min'                  => [
         'numeric' => 'Поле :attribute должно быть не меньше :min.',
-        'file'    => 'Размер файла в поле :attribute должен быть не меньше :min Килобайт(а).',
+        'file'    => 'Размер файла в поле :attribute должен быть не меньше :min килобайт(а).',
         'string'  => 'Количество символов в поле :attribute должно быть не меньше :min.',
         'array'   => 'Количество элементов в поле :attribute должно быть не меньше :min.',
     ],
@@ -98,7 +102,7 @@ return [
     'present'              => 'Поле :attribute должно присутствовать.',
     'regex'                => 'Поле :attribute имеет ошибочный формат.',
     'required'             => 'Заполните поле :attribute',
-    'required_if'          => 'Поле :attribute обязательно для заполнения, когда :other равно :value.',
+    'required_if'          => 'Поле :attribute обязательно для заполнения',
     'required_unless'      => 'Поле :attribute обязательно для заполнения, когда :other не равно :values.',
     'required_with'        => 'Поле :attribute обязательно для заполнения, когда :values указано.',
     'required_with_all'    => 'Поле :attribute обязательно для заполнения, когда :values указано.',
@@ -107,7 +111,7 @@ return [
     'same'                 => 'Значения полей :attribute и :other должны совпадать.',
     'size'                 => [
         'numeric' => 'Поле :attribute должно быть равным :size.',
-        'file'    => 'Размер файла в поле :attribute должен быть равен :size Килобайт(а).',
+        'file'    => 'Размер файла в поле :attribute должен быть равен :size килобайт(а).',
         'string'  => 'Количество символов в поле :attribute должно быть равным :size.',
         'array'   => 'Количество элементов в поле :attribute должно быть равным :size.',
     ],
@@ -139,8 +143,11 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'video_file' => [
+            'required_if' => 'Пожалуйста, приложите видеофайл',
+        ],
+        'video_link' => [
+            'required_if' => 'Укажите ссылку от видео',
         ],
     ],
 
@@ -170,11 +177,16 @@ return [
         'password'              => 'Пароль',
         'password_confirmation' => 'Подтверждение пароля',
         'current_password'      => 'Текущий пароль',
-        'course_name'           => 'Название курса',
-        'course_description'    => 'Краткое описание курса',
-        'course_category_id'    => 'Категория курса',
-        'course_language_id'    => 'Язык курса',
-        'course_cost'           => 'Стоимость курса',
+        'course_name'           => '"Название курса"',
+        'course_description'    => '"Описание курса"',
+        'course_category_id'    => '"Категория курса"',
+        'course_language_id'    => '"Язык курса"',
+        'course_cost'           => '"Стоимость курса"',
+        'course_poster'         => 'Обложка курса',
+
+        'lesson_name'           => '"Название урока"',
+        'lesson_description'    => '"Описание урока"',
+
         'flat'                  => 'Квартира',
         'house'                 => 'Дом',
         'street'                => 'Улица',

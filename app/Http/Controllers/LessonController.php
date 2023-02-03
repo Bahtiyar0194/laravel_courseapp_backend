@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lesson;
+use App\Models\LessonVideo;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -10,14 +11,22 @@ use Validator;
 
 class LessonController extends Controller
 {
+    use ApiResponser;
+
+    public function __construct(Request $request) 
+    {
+        app()->setLocale($request->header('Accept-Language'));
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function my_lessons(Request $request)
     {
-        //
+        $my_lessons = Lesson::where('course_id', $request['course_id'])
+        ->get();
+        return response()->json($my_lessons, 200);
     }
 
     /**
@@ -25,56 +34,60 @@ class LessonController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
+        $max_video_file_size = 10;
         $validator = Validator::make($request->all(), [
             'lesson_name' => 'required|string|between:3, 300',
             'lesson_description' => 'required|string|max:1000',
+            'lesson_type_id' => 'required',
             'course_id' => 'required',
-            // 'course_category_id' => 'required',
-            // 'course_language_id' => 'required',
-            // 'course_poster' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:1024'
+            'video_type' => 'required_if:lesson_type_id,2',
+            'video_file' => 'nullable|required_if:video_type,video_file|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$max_video_file_size,
+            'video_link' => 'nullable|required_if:video_type,video_url|url',
         ]);
 
         if($validator->fails()){
             return $this->json('error', 'Lesson create error', 422, $validator->errors());
         }
 
-        if($request->course_free == 'false'){
-            $cost_validator = Validator::make($request->all(), [
-                'course_cost' => 'required|numeric|min:1'
-            ]);
+        $count_lessons = Lesson::where("course_id", $request->course_id)->count();
+        $sort_num = $count_lessons + 1;
 
-            if($cost_validator->fails()){
-                return $this->json('error', 'Course create error', 422, $cost_validator->errors());
+        $new_lesson = new Lesson();
+        $new_lesson->lesson_name = $request->lesson_name;
+        $new_lesson->lesson_description = $request->lesson_description;
+        $new_lesson->course_id = $request->course_id;
+        $new_lesson->lesson_type_id = $request->lesson_type_id;
+        $new_lesson->sort_num = $sort_num;
+        $new_lesson->save();
+
+
+        //Если тип урока видеоурок
+        if($request->lesson_type_id == 2){
+            if($request->video_type == 'video_file'){
+                $file = $request->file('video_file');
+                $file_size = $request->file('video_file')->getSize() / 1048576;
+                $file_name = $file->hashName();
+                $file->storeAs('/videos/lessons/'.$new_lesson->lesson_id, $file_name);                
+                $content = $file_name;
+                $lesson_video_type_id = 1;
+            }
+            elseif($request->video_type == 'video_url'){
+                $file_size = null;
+                $content = $request->video_link;
+                $lesson_video_type_id = 2;
             }
 
-            $course_cost = $request->course_cost;
-        }
-        else{
-            $course_cost = 0;
-        }
-
-        if(isset($request->course_poster)){
-            $file = $request->file('course_poster');
-            $file_name = $file->hashName();
-            $file->storeAs('/images/posters', $file_name);
-        }
-        else{
-            $file_name = 'default.svg';
+            $new_lesson_video = new LessonVideo();
+            $new_lesson_video->lesson_id = $new_lesson->lesson_id;
+            $new_lesson_video->lesson_video_type_id = $lesson_video_type_id;
+            $new_lesson_video->content = $content;
+            $new_lesson_video->size = $file_size;
+            $new_lesson_video->save();
         }
         
-        $new_course = new Course();
-        $new_course->course_name = $request->course_name;
-        $new_course->course_description = $request->course_description;
-        $new_course->course_poster_file = $file_name;
-        $new_course->course_category_id = $request->course_category_id;
-        $new_course->course_lang_id = $request->course_language_id;
-        $new_course->school_id = 1;
-        $new_course->course_cost = $course_cost;
-        $new_course->save();
-
-        return $this->json('success', 'Course create successful', 200, $new_course);
+        return $this->json('success', 'Lesson create successful', 200, $new_lesson);
     }
 
     /**

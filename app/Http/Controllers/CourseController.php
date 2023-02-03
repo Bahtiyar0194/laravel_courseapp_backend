@@ -79,12 +79,16 @@ class CourseController extends Controller
      */
     public function create(Request $request)
     {
+        $max_file_size = 1;
+
         $validator = Validator::make($request->all(), [
             'course_name' => 'required|string|between:3, 300',
             'course_description' => 'required|string|max:1000',
             'course_category_id' => 'required',
             'course_language_id' => 'required',
-            'course_poster' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:1024'
+            'course_poster' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max_mb:'.$max_file_size,
+            'course_free' => 'required',
+            'course_cost' => 'nullable|required_if:course_free,false|numeric|min:1',
         ]);
 
         if($validator->fails()){
@@ -92,14 +96,6 @@ class CourseController extends Controller
         }
 
         if($request->course_free == 'false'){
-            $cost_validator = Validator::make($request->all(), [
-                'course_cost' => 'required|numeric|min:1'
-            ]);
-
-            if($cost_validator->fails()){
-                return $this->json('error', 'Course create error', 422, $cost_validator->errors());
-            }
-
             $course_cost = $request->course_cost;
         }
         else{
