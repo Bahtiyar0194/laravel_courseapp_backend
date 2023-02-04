@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserRole;
+use App\Models\School;
+
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -24,6 +27,8 @@ class AuthController extends Controller
             'last_name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'phone' => 'required|numeric|unique:users',
+            'school_name' => 'required|string|between:2,100',
+            'school_domain' => 'required|string|between:2,20|regex:/(^([a-z]+)(\d+)?$)/u|unique:schools',
             'password' => 'required|string|min:6'
         ]);
 
@@ -35,6 +40,10 @@ class AuthController extends Controller
             $validator->validated(),
             ['password' => bcrypt($request->password)]
         ));
+
+        $user_role = new UserRole();
+        $user_role->user_id = $user->user_id;
+        $user_role->role_type_id = 1;
 
         return $this->json('success', 'Login successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
     }

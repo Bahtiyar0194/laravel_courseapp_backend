@@ -61,6 +61,7 @@ Route::group([
     ], function ($router) {
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
+            Route::post('/set_order', [LessonController::class, 'set_order']);
             Route::post('/create', [LessonController::class, 'create']);
         });
     });

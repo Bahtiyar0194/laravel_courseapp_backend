@@ -102,7 +102,7 @@ return [
     'regex'                => ' :attribute пішімі жарамсыз.',
     'required'             => ' :attribute толық болуы керек.',
     'required_if'          => ' :attribute толық болуы керек.',
-    'required_unless'      => ' :attribute жолы :other мәні :values ішінде болмағанда толтырылуы керек.',
+    'required_unless'      => ' :attribute толық болуы керек',
     'required_with'        => ' :attribute жолы :values болғанда толтырылуы керек.',
     'required_with_all'    => ' :attribute жолы :values болғанда толтырылуы керек.',
     'required_without'     => ' :attribute жолы :values болмағанда толтырылуы керек.',
@@ -161,6 +161,10 @@ return [
         'last_name'             => 'Тегіңіз',
         'password'              => 'Құпия сөз',
         'password_confirmation' => 'Құпия сөзді растау',
+
+        'school_name'           => 'Мектептің атауы',
+        'school_domain'         => 'Домендік атауы',
+
         'course_name'           => 'Курстың атауы',
         'course_description'    => 'Курстың қысқаша сипаттамасы',
         'course_category_id'    => 'Курстың санаты',
@@ -168,7 +172,7 @@ return [
         'course_cost'           => 'Курстың бағасы',
         'course_poster'         => 'Курстың мұқабасы',
 
-        'lesson_name'           => 'Сабақтың аты',
+        'lesson_name'           => 'Сабақтың атауы',
         'lesson_description'    => 'Сабақтың қысқаша сипаттамасы',
 
         'flat'                  => 'Пәтер',

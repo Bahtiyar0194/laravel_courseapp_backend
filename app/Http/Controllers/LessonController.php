@@ -25,8 +25,30 @@ class LessonController extends Controller
     public function my_lessons(Request $request)
     {
         $my_lessons = Lesson::where('course_id', $request['course_id'])
+        ->orderBy('sort_num', 'asc')
         ->get();
-        return response()->json($my_lessons, 200);
+
+
+        $materials_count = 0;
+        $sections_count = 0;
+        $total_count = 0;
+
+        foreach ($my_lessons as $key => $value) {
+            if($value->lesson_type_id != 3){
+                $materials_count += 1;
+            }
+            else{
+                $sections_count += 1;
+            }
+            $total_count += 1;
+        }
+
+        return response()->json([
+            'my_lessons' => $my_lessons,
+            'materials_count' => $materials_count,
+            'sections_count' => $sections_count,
+            'total_count' => $total_count
+        ], 200);
     }
 
     /**
@@ -39,7 +61,7 @@ class LessonController extends Controller
         $max_video_file_size = 10;
         $validator = Validator::make($request->all(), [
             'lesson_name' => 'required|string|between:3, 300',
-            'lesson_description' => 'required|string|max:1000',
+            'lesson_description' => 'required_unless:lesson_type_id,3|string|max:1000',
             'lesson_type_id' => 'required',
             'course_id' => 'required',
             'video_type' => 'required_if:lesson_type_id,2',
@@ -88,6 +110,20 @@ class LessonController extends Controller
         }
         
         return $this->json('success', 'Lesson create successful', 200, $new_lesson);
+    }
+
+
+    public function set_order(Request $request)
+    {
+        $array = explode(',', $request->lessons_id);
+        for ($i=0; $i < count($array); $i++) { 
+            $lesson = Lesson::where('lesson_id', $array[$i])
+            ->where('course_id', $request->course_id)
+            ->first();
+            $lesson->sort_num = $i+1;
+            $lesson->save();
+        }
+        return response()->json('Success', 200);
     }
 
     /**

@@ -39,6 +39,7 @@ class CourseController extends Controller
             'languages.lang_name'
         )
         ->where('courses.show_status_id', 1)
+        ->where('courses.school_id', 1)
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->get();
         

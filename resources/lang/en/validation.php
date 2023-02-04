@@ -103,7 +103,7 @@ return [
     'regex' => 'The :attribute format is invalid.',
     'required' => 'The :attribute field is required.',
     'required_if' => 'The :attribute field is required',
-    'required_unless' => 'The :attribute field is required unless :other is in :values.',
+    'required_unless' => 'The :attribute field is required',
     'required_with' => 'The :attribute field is required when :values is present.',
     'required_with_all' => 'The :attribute field is required when :values are present.',
     'required_without' => 'The :attribute field is required when :values is not present.',
@@ -155,6 +155,8 @@ return [
     */
 
     'attributes' => [
+        'school_name'           => 'school name',
+        'school_domain'         => 'school domain',
         'course_name'           => 'course name',
         'course_description'    => 'course description',
         'course_category_id'    => 'course category',
