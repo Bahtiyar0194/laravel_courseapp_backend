@@ -188,8 +188,8 @@ return [
         'course_cost'           => 'Стоимость курса',
         'course_poster'         => 'Обложка курса',
 
-        'lesson_name'           => '"Название урока"',
-        'lesson_description'    => '"Описание урока"',
+        'lesson_name'           => 'Название урока',
+        'lesson_description'    => 'Описание урока',
 
         'flat'                  => 'Квартира',
         'house'                 => 'Дом',

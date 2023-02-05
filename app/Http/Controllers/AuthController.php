@@ -44,6 +44,16 @@ class AuthController extends Controller
         $user_role = new UserRole();
         $user_role->user_id = $user->user_id;
         $user_role->role_type_id = 1;
+        $user_role->save();
+
+        $school = new School();
+        $school->school_domain = $request->school_domain;
+        $school->school_name = $request->school_name;
+        $school->school_type_id = 1;
+        $school->owner_id = $user->user_id;
+        $school->email = $user->email;
+        $school->phone = $user->phone;
+        $school->save();
 
         return $this->json('success', 'Login successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
     }
@@ -71,7 +81,18 @@ class AuthController extends Controller
     }
 
     public function me(Request $request){
-        return auth()->user();
+        $user = auth()->user();
+
+        $roles = [];
+
+        foreach (UserRole::where('user_id', $user->user_id)->get() as $key => $value) {
+            array_push($roles, $value['role_type_id']);
+        }
+
+        return response()->json([
+            'user' => $user,
+            'roles' => $roles
+        ], 200);
     }
 
     public function logout()
