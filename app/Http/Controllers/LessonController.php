@@ -17,17 +17,12 @@ class LessonController extends Controller
     {
         app()->setLocale($request->header('Accept-Language'));
     }
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function my_lessons(Request $request)
     {
         $my_lessons = Lesson::where('course_id', $request['course_id'])
         ->orderBy('sort_num', 'asc')
         ->get();
-
 
         $materials_count = 0;
         $sections_count = 0;
@@ -58,72 +53,83 @@ class LessonController extends Controller
      */
     public function create(Request $request)
     {
-        $max_video_file_size = 10;
-        $validator = Validator::make($request->all(), [
-            'lesson_name' => 'required|string|between:3, 300',
-            'lesson_description' => 'required_unless:lesson_type_id,3|string|max:1000',
-            'lesson_type_id' => 'required',
-            'course_id' => 'required',
-            'video_type' => 'required_if:lesson_type_id,2',
-            'video_file' => 'nullable|required_if:video_type,video_file|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$max_video_file_size,
-            'video_link' => 'nullable|required_if:video_type,video_url|url',
-        ]);
 
-        if($validator->fails()){
-            return $this->json('error', 'Lesson create error', 422, $validator->errors());
-        }
+        if(checkRoles([2])){
+            $max_video_file_size = 10;
+            $validator = Validator::make($request->all(), [
+                'lesson_name' => 'required|string|between:3, 300',
+                'lesson_description' => 'required_unless:lesson_type_id,3|string|max:1000',
+                'lesson_type_id' => 'required',
+                'course_id' => 'required',
+                'video_type' => 'required_if:lesson_type_id,2',
+                'video_file' => 'nullable|required_if:video_type,video_file|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$max_video_file_size,
+                'video_link' => 'nullable|required_if:video_type,video_url|url',
+            ]);
 
-        $count_lessons = Lesson::where("course_id", $request->course_id)->count();
-        $sort_num = $count_lessons + 1;
+            if($validator->fails()){
+                return $this->json('error', 'Lesson create error', 422, $validator->errors());
+            }
 
-        $new_lesson = new Lesson();
-        $new_lesson->lesson_name = $request->lesson_name;
-        $new_lesson->lesson_description = $request->lesson_description;
-        $new_lesson->course_id = $request->course_id;
-        $new_lesson->lesson_type_id = $request->lesson_type_id;
-        $new_lesson->sort_num = $sort_num;
-        $new_lesson->save();
+            $count_lessons = Lesson::where("course_id", $request->course_id)->count();
+            $sort_num = $count_lessons + 1;
+
+            $new_lesson = new Lesson();
+            $new_lesson->lesson_name = $request->lesson_name;
+            $new_lesson->lesson_description = $request->lesson_description;
+            $new_lesson->course_id = $request->course_id;
+            $new_lesson->lesson_type_id = $request->lesson_type_id;
+            $new_lesson->sort_num = $sort_num;
+            $new_lesson->save();
 
 
         //Если тип урока видеоурок
-        if($request->lesson_type_id == 2){
-            if($request->video_type == 'video_file'){
-                $file = $request->file('video_file');
-                $file_size = $request->file('video_file')->getSize() / 1048576;
-                $file_name = $file->hashName();
-                $file->storeAs('/videos/lessons/'.$new_lesson->lesson_id, $file_name);                
-                $content = $file_name;
-                $lesson_video_type_id = 1;
-            }
-            elseif($request->video_type == 'video_url'){
-                $file_size = null;
-                $content = $request->video_link;
-                $lesson_video_type_id = 2;
+            if($request->lesson_type_id == 2){
+                if($request->video_type == 'video_file'){
+                    $file = $request->file('video_file');
+                    $file_size = $request->file('video_file')->getSize() / 1048576;
+                    $file_name = $file->hashName();
+                    $file->storeAs('/videos/lessons/'.$new_lesson->lesson_id, $file_name);                
+                    $content = $file_name;
+                    $lesson_video_type_id = 1;
+                }
+                elseif($request->video_type == 'video_url'){
+                    $file_size = null;
+                    $content = $request->video_link;
+                    $lesson_video_type_id = 2;
+                }
+
+                $new_lesson_video = new LessonVideo();
+                $new_lesson_video->lesson_id = $new_lesson->lesson_id;
+                $new_lesson_video->lesson_video_type_id = $lesson_video_type_id;
+                $new_lesson_video->content = $content;
+                $new_lesson_video->size = $file_size;
+                $new_lesson_video->save();
             }
 
-            $new_lesson_video = new LessonVideo();
-            $new_lesson_video->lesson_id = $new_lesson->lesson_id;
-            $new_lesson_video->lesson_video_type_id = $lesson_video_type_id;
-            $new_lesson_video->content = $content;
-            $new_lesson_video->size = $file_size;
-            $new_lesson_video->save();
+            return $this->json('success', 'Lesson create successful', 200, $new_lesson);
         }
-        
-        return $this->json('success', 'Lesson create successful', 200, $new_lesson);
+        else{
+            return response()->json('Access denied', 403);
+        }
     }
 
 
     public function set_order(Request $request)
     {
-        $array = explode(',', $request->lessons_id);
-        for ($i=0; $i < count($array); $i++) { 
-            $lesson = Lesson::where('lesson_id', $array[$i])
-            ->where('course_id', $request->course_id)
-            ->first();
-            $lesson->sort_num = $i+1;
-            $lesson->save();
+        if(checkRoles([2])){
+            $array = explode(',', $request->lessons_id);
+            for ($i=0; $i < count($array); $i++) { 
+                $lesson = Lesson::where('lesson_id', $array[$i])
+                ->where('course_id', $request->course_id)
+                ->first();
+                $lesson->sort_num = $i+1;
+                $lesson->save();
+            }
+            return response()->json('Success', 200);
         }
-        return response()->json('Success', 200);
+        else{
+            return response()->json('Access denied', 403);
+        }
     }
 
     /**

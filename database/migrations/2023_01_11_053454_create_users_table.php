@@ -17,14 +17,14 @@ class CreateUsersTable extends Migration
             $table->increments('user_id');
             $table->string('first_name');
             $table->string('last_name');
-            $table->string('email')->unique();
-            $table->string('phone')->unique();
+            $table->string('email');
+            $table->string('phone');
             $table->float('wallet')->default(0);
+            $table->integer('school_id')->unsigned();
+            $table->foreign('school_id')->references('school_id')->on('schools');
             $table->integer('ban_status_id')->default(1)->unsigned();
             $table->foreign('ban_status_id')->references('ban_status_id')->on('ban_status');
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->rememberToken();
             $table->timestamps();
         });
     }

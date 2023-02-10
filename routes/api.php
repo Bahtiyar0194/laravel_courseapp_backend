@@ -5,6 +5,7 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseCategoryController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\SchoolController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,12 @@ Route::group([
             Route::get('/me', [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
+    });
+
+    Route::group([
+        'prefix' => 'school'
+    ], function ($router) {
+        Route::get('/get', [SchoolController::class, 'get_school'])->middleware('check_subdomain');
     });
 
     Route::group([

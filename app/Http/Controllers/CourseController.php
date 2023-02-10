@@ -10,21 +10,14 @@ use File;
 use App\Http\Controllers\Controller;
 use Validator;
 
-class CourseController extends Controller
-{
+class CourseController extends Controller{
     use ApiResponser;
 
-    public function __construct(Request $request) 
-    {
+    public function __construct(Request $request){
         app()->setLocale($request->header('Accept-Language'));
     }
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function my_courses(Request $request)
-    {
+
+    public function my_courses(Request $request){
         $my_courses = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
         ->leftJoin('languages','course_categories_lang.lang_id','=','languages.lang_id')
@@ -38,16 +31,15 @@ class CourseController extends Controller
             'course_categories_lang.course_category_name',
             'languages.lang_name'
         )
+        ->where('courses.school_id', auth()->user()->school_id)
         ->where('courses.show_status_id', 1)
-        ->where('courses.school_id', 1)
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->get();
-        
+
         return response()->json($my_courses, 200);
     }
 
-    public function course(Request $request)
-    {     
+    public function course(Request $request){   
         $course = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
         ->leftJoin('languages','course_categories_lang.lang_id','=','languages.lang_id')
@@ -61,6 +53,7 @@ class CourseController extends Controller
             'course_categories_lang.course_category_name',
             'languages.lang_name'
         )
+        ->where('courses.school_id', auth()->user()->school_id)
         ->where('courses.course_id', $request['course_id'])
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->first();
@@ -73,13 +66,8 @@ class CourseController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create(Request $request)
-    {
+    public function create(Request $request){
+     if(checkRoles([2])){
         $max_file_size = 1;
 
         $validator = Validator::make($request->all(), [
@@ -118,83 +106,30 @@ class CourseController extends Controller
         $new_course->course_poster_file = $file_name;
         $new_course->course_category_id = $request->course_category_id;
         $new_course->course_lang_id = $request->course_language_id;
-        $new_course->school_id = 1;
+        $new_course->school_id = auth()->user()->school_id;
         $new_course->course_cost = $course_cost;
         $new_course->save();
 
         return $this->json('success', 'Course create successful', 200, $new_course);
     }
+    else{
+        return response()->json('Access denied', 403);
+    }
+}
 
 
-    public function poster($file_name)
-    {
-        $path = storage_path('/app/images/posters/' . $file_name);
+public function poster($file_name){
+    $path = storage_path('/app/images/posters/' . $file_name);
 
-        if (!File::exists($path)) {
-            return response()->json('Not found', 404);
-        }
-
-        $file = File::get($path);
-        $type = File::mimeType($path);
-
-        $response = Response::make($file, 200);
-        $response->header("Content-Type", $type);
-        return $response;
+    if (!File::exists($path)) {
+        return response()->json('Not found', 404);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    $file = File::get($path);
+    $type = File::mimeType($path);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
+    $response = Response::make($file, 200);
+    $response->header("Content-Type", $type);
+    return $response;
+}
 }
