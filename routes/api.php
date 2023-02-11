@@ -59,7 +59,7 @@ Route::group([
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/my-courses', [CourseController::class, 'my_courses']);
             Route::get('/my-courses/{course_id}', [CourseController::class, 'course']);
-            Route::post('/create', [CourseController::class, 'create']);
+            Route::post('/create', [CourseController::class, 'create'])->middleware('check_roles');
         });
     });
 
@@ -67,9 +67,10 @@ Route::group([
         'prefix' => 'lessons'
     ], function ($router) {
         Route::group(['middleware' => ['auth:sanctum']], function () {
-            Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
-            Route::post('/set_order', [LessonController::class, 'set_order']);
-            Route::post('/create', [LessonController::class, 'create']);
-        });
+           Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
+           Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
+           Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
+           Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
+       });
     });
 });

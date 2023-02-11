@@ -39,7 +39,7 @@ class CourseController extends Controller{
         return response()->json($my_courses, 200);
     }
 
-    public function course(Request $request){   
+    public function course(Request $request){
         $course = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
         ->leftJoin('languages','course_categories_lang.lang_id','=','languages.lang_id')
@@ -67,7 +67,6 @@ class CourseController extends Controller{
     }
 
     public function create(Request $request){
-     if(checkRoles([2])){
         $max_file_size = 1;
 
         $validator = Validator::make($request->all(), [
@@ -112,24 +111,20 @@ class CourseController extends Controller{
 
         return $this->json('success', 'Course create successful', 200, $new_course);
     }
-    else{
-        return response()->json('Access denied', 403);
+
+
+    public function poster($file_name){
+        $path = storage_path('/app/images/posters/' . $file_name);
+
+        if (!File::exists($path)) {
+            return response()->json('Not found', 404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        $response = Response::make($file, 200);
+        $response->header("Content-Type", $type);
+        return $response;
     }
-}
-
-
-public function poster($file_name){
-    $path = storage_path('/app/images/posters/' . $file_name);
-
-    if (!File::exists($path)) {
-        return response()->json('Not found', 404);
-    }
-
-    $file = File::get($path);
-    $type = File::mimeType($path);
-
-    $response = Response::make($file, 200);
-    $response->header("Content-Type", $type);
-    return $response;
-}
 }
