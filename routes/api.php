@@ -66,11 +66,14 @@ Route::group([
     Route::group([
         'prefix' => 'lessons'
     ], function ($router) {
-        Route::group(['middleware' => ['auth:sanctum']], function () {
-           Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
-           Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
-           Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
-           Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
-       });
-    });
+     Route::group(['middleware' => ['auth:sanctum']], function () {
+         Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
+         Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
+         Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
+         Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
+         Route::post('/video/create_token/{lesson_id}', [LessonController::class, 'create_video_token']);
+     });
+
+     Route::get('/video/{token}', [LessonController::class, 'get_video']);
+ });
 });

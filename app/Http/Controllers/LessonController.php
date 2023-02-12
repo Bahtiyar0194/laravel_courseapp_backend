@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Lesson;
 use App\Models\LessonVideo;
+use App\Models\VideoToken;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
+use File;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Validator;
 
@@ -158,6 +162,68 @@ class LessonController extends Controller
         }
         return response()->json('Success', 200);
     }
+
+
+    public function create_video_token(Request $request){
+        $lesson_id = $request->lesson_id;
+
+        $lesson = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
+        ->leftJoin('schools','courses.school_id','=','schools.school_id')
+        ->where('lessons.lesson_id', $lesson_id)
+        ->where('schools.school_id', auth()->user()->school_id)
+        ->first();
+
+        if(isset($lesson)){
+            $lesson_video = LessonVideo::where('lesson_id', $lesson->lesson_id)
+            ->first();
+
+            if(isset($lesson_video)){
+             $new_video_token = new VideoToken();
+             $new_video_token->lesson_video_id = $lesson_video->lesson_video_id;
+             $new_video_token->token = Str::random(15);
+             $new_video_token->save();
+
+             return response()->json($new_video_token->token, 200);
+         }
+         else{
+             return response()->json('Lesson video not found', 404);
+         }
+     }
+     else{
+        return response()->json('Access denied', 403);
+    }
+}
+
+
+public function get_video(Request $request){
+
+    $video_token = VideoToken::where('token', $request->token)
+    ->first();
+
+    if(isset($video_token)){
+        $lesson_video = LessonVideo::find($video_token->lesson_video_id);
+
+        $path = storage_path('/app/videos/lessons/'.$lesson_video->lesson_id.'/'.$lesson_video->content);
+
+        if (!File::exists($path)) {
+            return response()->json('Video not found', 404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        VideoToken::where('lesson_video_id', $video_token->lesson_video_id)
+        ->delete();
+
+        $response = Response::make($file, 200);
+        $response->header("Content-Type", $type);
+        return $response;
+    }
+    else{
+        return response()->json('Video not found', 404);
+    }
+}
+
 
     /**
      * Store a newly created resource in storage.
