@@ -21,7 +21,7 @@ class CreateCoursesTable extends Migration
             $table->integer('course_category_id')->unsigned();
             $table->foreign('course_category_id')->references('course_category_id')->on('course_categories');
             $table->integer('school_id')->unsigned();
-            $table->foreign('school_id')->references('school_id')->on('schools');
+            $table->foreign('school_id')->references('school_id')->on('schools')->onDelete('cascade');
             $table->integer('course_lang_id')->unsigned();
             $table->foreign('course_lang_id')->references('lang_id')->on('languages');
             $table->float('course_cost')->default(0);

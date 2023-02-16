@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\UserOperation;
+
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -108,6 +110,11 @@ class CourseController extends Controller{
         $new_course->school_id = auth()->user()->school_id;
         $new_course->course_cost = $course_cost;
         $new_course->save();
+
+        $user_operation = new UserOperation();
+        $user_operation->operator_id = auth()->user()->user_id;
+        $user_operation->operation_type_id = 3;
+        $user_operation->save();
 
         return $this->json('success', 'Course create successful', 200, $new_course);
     }

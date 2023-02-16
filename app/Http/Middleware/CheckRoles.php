@@ -21,25 +21,30 @@ class CheckRoles{
 
         $operation_type_id = $request->operation_type_id;
 
-        $role_found = false;
+        if(isset($operation_type_id)){
+            $role_found = false;
 
-        $userRoles = UserRole::where('user_id', $user->user_id)->get();
+            $userRoles = UserRole::where('user_id', $user->user_id)->get();
 
-        foreach ($userRoles as $role) {
-            $findOperationRole = OperationRole::where('operation_type_id', $operation_type_id)
-            ->where('role_type_id', $role->role_type_id)
-            ->first();
+            foreach ($userRoles as $role) {
+                $findOperationRole = OperationRole::where('operation_type_id', $operation_type_id)
+                ->where('role_type_id', $role->role_type_id)
+                ->first();
 
-            if(isset($findOperationRole)){
-                $role_found = true;
-                break;
+                if(isset($findOperationRole)){
+                    $role_found = true;
+                    break;
+                }
             }
-        }
 
-        if($role_found === false){
-            return response()->json('Role not found', 403);
-        }
+            if($role_found === false){
+                return response()->json('Role not found', 403);
+            }
 
-        return $next($request);
+            return $next($request);
+        }
+        else{
+            return response()->json('Operation type id required', 403);
+        }
     }
 }

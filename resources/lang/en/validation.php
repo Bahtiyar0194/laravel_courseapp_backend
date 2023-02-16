@@ -166,6 +166,9 @@ return [
 
         'lesson_name'           => 'lesson name',
         'lesson_description'    => 'lesson description',
+
+        'task_name'             => 'Task name',
+        'task_description'      => 'Task description',
     ],
 
 ];

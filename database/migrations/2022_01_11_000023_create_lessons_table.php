@@ -18,7 +18,7 @@ class CreateLessonsTable extends Migration
             $table->string('lesson_name');
             $table->text('lesson_description')->nullable();
             $table->integer('course_id')->unsigned();
-            $table->foreign('course_id')->references('course_id')->on('courses');
+            $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
             $table->integer('lesson_type_id')->unsigned();
             $table->foreign('lesson_type_id')->references('lesson_type_id')->on('types_of_lessons');
             $table->integer('show_status_id')->default(1)->unsigned();

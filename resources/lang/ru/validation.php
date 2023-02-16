@@ -191,6 +191,9 @@ return [
         'lesson_name'           => 'Название урока',
         'lesson_description'    => 'Описание урока',
 
+        'task_name'             => 'Название задания',
+        'task_description'      => 'Описание задания',
+
         'flat'                  => 'Квартира',
         'house'                 => 'Дом',
         'street'                => 'Улица',

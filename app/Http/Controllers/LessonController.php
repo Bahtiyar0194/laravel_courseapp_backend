@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Lesson;
 use App\Models\LessonVideo;
-use App\Models\VideoToken;
+use App\Models\School;
+use App\Models\UserOperation;
+
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -13,8 +15,7 @@ use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Validator;
 
-class LessonController extends Controller
-{
+class LessonController extends Controller{
     use ApiResponser;
 
     public function __construct(Request $request){
@@ -96,7 +97,7 @@ class LessonController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function create(Request $request){
-        $max_video_file_size = 10;
+        $max_video_file_size = 100;
         $validator = Validator::make($request->all(), [
             'lesson_name' => 'required|string|between:3, 300',
             'lesson_description' => 'required_unless:lesson_type_id,3|string|max:1000',
@@ -147,6 +148,13 @@ class LessonController extends Controller
             $new_lesson_video->save();
         }
 
+        if($request->lesson_type_id != 3){
+            $user_operation = new UserOperation();
+            $user_operation->operator_id = auth()->user()->user_id;
+            $user_operation->operation_type_id = 4;
+            $user_operation->save();
+        }
+
         return $this->json('success', 'Lesson create successful', 200, $new_lesson);
     }
 
@@ -164,77 +172,72 @@ class LessonController extends Controller
     }
 
 
-    public function create_video_token(Request $request){
-        $lesson_id = $request->lesson_id;
+    public function get_video(Request $request){
 
-        $lesson = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
-        ->leftJoin('schools','courses.school_id','=','schools.school_id')
-        ->where('lessons.lesson_id', $lesson_id)
-        ->where('schools.school_id', auth()->user()->school_id)
-        ->first();
+        $origin = parse_url($request->header('Referer'));
 
-        if(isset($lesson)){
-            $lesson_video = LessonVideo::where('lesson_id', $lesson->lesson_id)
-            ->first();
+        if(isset($origin['host'])){
+            $host = $origin['host'];
+            $parts = explode('.', $host);
 
-            if(isset($lesson_video)){
-             $new_video_token = new VideoToken();
-             $new_video_token->lesson_video_id = $lesson_video->lesson_video_id;
-             $new_video_token->token = Str::random(15);
-             $new_video_token->save();
+            if(count($parts) >= 2){
+                $subdomain = 'test';
+                $school = School::where('school_domain', $subdomain)->first();
 
-             return response()->json($new_video_token->token, 200);
-         }
-         else{
-             return response()->json('Lesson video not found', 404);
-         }
-     }
-     else{
+                if(isset($school)){
+                    $lesson_id = $request->lesson_id;
+
+                    $lesson = Lesson::leftJoin('courses', 'lessons.course_id', '=', 'courses.course_id')
+                    ->leftJoin('schools', 'courses.school_id', '=', 'schools.school_id')
+                    ->where('schools.school_id', $school->school_id)
+                    ->where('lessons.lesson_id', $lesson_id)
+                    ->first();
+
+                    if(isset($lesson)){
+                        $lesson_video = LessonVideo::where('lesson_id', $lesson->lesson_id)
+                        ->first();
+
+                        if(isset($lesson_video)){
+                            $path = storage_path('/app/videos/lessons/'.$lesson_video->lesson_id.'/'.$lesson_video->content);
+
+                            if (!File::exists($path)) {
+                                return response()->json('Video not found', 404);
+                            }
+
+                            $file = File::get($path);
+                            $type = File::mimeType($path);
+
+                            $response = Response::make($file, 200);
+                            $response->header("Content-Type", $type);
+                            return $response;
+
+                        }
+                        else{
+                           return response()->json('Lesson video not found', 404);
+                       }
+                   }
+                   else{
+                    return response()->json('Access denied', 403);
+                }
+            }
+            else{
+                return response()->json('Access denied', 403);
+            }
+        }
+        else{
+            return response()->json('Access denied', 403);
+        }
+    }
+    else{
         return response()->json('Access denied', 403);
     }
 }
 
 
-public function get_video(Request $request){
 
-    $video_token = VideoToken::where('token', $request->token)
-    ->first();
+public function store(Request $request){
 
-    if(isset($video_token)){
-        $lesson_video = LessonVideo::find($video_token->lesson_video_id);
-
-        $path = storage_path('/app/videos/lessons/'.$lesson_video->lesson_id.'/'.$lesson_video->content);
-
-        if (!File::exists($path)) {
-            return response()->json('Video not found', 404);
-        }
-
-        $file = File::get($path);
-        $type = File::mimeType($path);
-
-        VideoToken::where('lesson_video_id', $video_token->lesson_video_id)
-        ->delete();
-
-        $response = Response::make($file, 200);
-        $response->header("Content-Type", $type);
-        return $response;
-    }
-    else{
-        return response()->json('Video not found', 404);
-    }
 }
-
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
     /**
      * Display the specified resource.

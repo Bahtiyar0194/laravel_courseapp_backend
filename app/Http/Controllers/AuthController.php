@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\School;
+use App\Models\UserOperation;
 
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
@@ -84,12 +85,22 @@ class AuthController extends Controller
 
         if($request->first_registration == 'true'){
             $user_role->role_type_id = 2;
+
+            $user_operation = new UserOperation();
+            $user_operation->operator_id = $user->user_id;
+            $user_operation->operation_type_id = 2;
+            $user_operation->save();
         }
         elseif($request->first_registration == 'false'){
             $user_role->role_type_id = 4;
         }
 
         $user_role->save();
+
+        $user_operation = new UserOperation();
+        $user_operation->operator_id = $user->user_id;
+        $user_operation->operation_type_id = 1;
+        $user_operation->save();
 
         return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
     }

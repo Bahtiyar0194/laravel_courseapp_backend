@@ -16,7 +16,7 @@ class CreateUserOperationsTable extends Migration
         Schema::create('user_operations', function (Blueprint $table) {
             $table->increments('user_operation_id');
             $table->integer('operator_id')->unsigned();
-            $table->foreign('operator_id')->references('user_id')->on('users');
+            $table->foreign('operator_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->integer('operation_type_id')->unsigned();
             $table->foreign('operation_type_id')->references('operation_type_id')->on('types_of_operations');
             $table->timestamps();

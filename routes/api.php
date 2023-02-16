@@ -5,7 +5,9 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseCategoryController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SchoolController;
+
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -65,15 +67,23 @@ Route::group([
 
     Route::group([
         'prefix' => 'lessons'
-    ], function ($router) {
+    ], function ($router){
      Route::group(['middleware' => ['auth:sanctum']], function () {
          Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
          Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
          Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
          Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
-         Route::post('/video/create_token/{lesson_id}', [LessonController::class, 'create_video_token']);
      });
 
-     Route::get('/video/{token}', [LessonController::class, 'get_video']);
+     Route::get('/video/{lesson_id}', [LessonController::class, 'get_video']);
+ });
+
+    Route::group([
+        'prefix' => 'tasks'
+    ], function ($router){
+     Route::group(['middleware' => ['auth:sanctum']], function () {
+         Route::post('/create', [TaskController::class, 'create'])->middleware('check_roles');
+         Route::get('/my_tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
+     });
  });
 });

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateLessonVideosTable extends Migration
+class CreateLessonTasksTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateLessonVideosTable extends Migration
      */
     public function up()
     {
-        Schema::create('lesson_videos', function (Blueprint $table) {
-            $table->increments('lesson_video_id');
+        Schema::create('lesson_tasks', function (Blueprint $table) {
+            $table->increments('task_id');
+            $table->string('task_name');
+            $table->text('task_description')->nullable();
             $table->integer('lesson_id')->unsigned();
             $table->foreign('lesson_id')->references('lesson_id')->on('lessons')->onDelete('cascade');
-            $table->integer('lesson_video_type_id')->unsigned();
-            $table->foreign('lesson_video_type_id')->references('lesson_video_type_id')->on('types_of_lesson_videos');
-            $table->string('content');
-            $table->float('size')->nullable();
+            $table->integer('task_type_id')->unsigned();
+            $table->foreign('task_type_id')->references('task_type_id')->on('types_of_tasks');
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ class CreateLessonVideosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('lesson_videos');
+        Schema::dropIfExists('lesson_tasks');
     }
 }
