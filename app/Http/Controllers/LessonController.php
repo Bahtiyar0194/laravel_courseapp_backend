@@ -6,6 +6,7 @@ use App\Models\Lesson;
 use App\Models\LessonVideo;
 use App\Models\School;
 use App\Models\UserOperation;
+use App\Models\MediaFile;
 
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
@@ -97,10 +98,12 @@ class LessonController extends Controller{
      * @return \Illuminate\Http\Response
      */
     public function create(Request $request){
+
         $max_video_file_size = 100;
+
         $validator = Validator::make($request->all(), [
             'lesson_name' => 'required|string|between:3, 300',
-            'lesson_description' => 'required_unless:lesson_type_id,3|string|max:1000',
+            'lesson_description' => 'required_unless:lesson_type_id,3|string|min:10',
             'lesson_type_id' => 'required',
             'course_id' => 'required',
             'video_type' => 'required_if:lesson_type_id,2',
@@ -126,6 +129,7 @@ class LessonController extends Controller{
 
         //Если тип урока видеоурок
         if($request->lesson_type_id == 2){
+
             if($request->video_type == 'video_file'){
                 $file = $request->file('video_file');
                 $file_size = $request->file('video_file')->getSize() / 1048576;
@@ -180,43 +184,37 @@ class LessonController extends Controller{
             $host = $origin['host'];
             $parts = explode('.', $host);
 
-            if(count($parts) >= 2){
-                $subdomain = 'test';
+            if(count($parts) == 2){
+                $subdomain = $parts[0];
                 $school = School::where('school_domain', $subdomain)->first();
 
                 if(isset($school)){
-                    $lesson_id = $request->lesson_id;
+                    $file_id = $request->file_id;
 
-                    $lesson = Lesson::leftJoin('courses', 'lessons.course_id', '=', 'courses.course_id')
-                    ->leftJoin('schools', 'courses.school_id', '=', 'schools.school_id')
-                    ->where('schools.school_id', $school->school_id)
-                    ->where('lessons.lesson_id', $lesson_id)
+                    $video_file = MediaFile::where('school_id', $school->school_id)
+                    ->where('file_id', $file_id)
                     ->first();
 
-                    if(isset($lesson)){
-                        $lesson_video = LessonVideo::where('lesson_id', $lesson->lesson_id)
-                        ->first();
+                    if(isset($video_file)){
 
-                        if(isset($lesson_video)){
-                            $path = storage_path('/app/videos/lessons/'.$lesson_video->lesson_id.'/'.$lesson_video->content);
+                        $path = storage_path('/app/videos/schools/'.$school->school_id.'/'.$video_file->file_name);
 
-                            if (!File::exists($path)) {
-                                return response()->json('Video not found', 404);
-                            }
-
-                            $file = File::get($path);
-                            $type = File::mimeType($path);
-
-                            $response = Response::make($file, 200);
-                            $response->header("Content-Type", $type);
-                            return $response;
-
+                        if (!File::exists($path)) {
+                            return response()->json('Video not found', 404);
                         }
-                        else{
-                           return response()->json('Lesson video not found', 404);
-                       }
-                   }
-                   else{
+
+                        $file = File::get($path);
+                        $type = File::mimeType($path);
+
+                        $response = Response::make($file, 200);
+                        $response->header("Content-Type", $type);
+                        return $response;
+                    }
+                    else{
+                        return response()->json('Access denied', 403);
+                    }
+                }
+                else{
                     return response()->json('Access denied', 403);
                 }
             }
@@ -228,16 +226,57 @@ class LessonController extends Controller{
             return response()->json('Access denied', 403);
         }
     }
-    else{
-        return response()->json('Access denied', 403);
+
+
+
+    public function upload_video(Request $request){
+        $max_video_file_size = 100;
+        $school_id = auth()->user()->school_id;
+
+        $validator = Validator::make($request->all(), [
+            'video_name' => 'required|string|between:3, 100',
+            'video_type' => 'required',
+            'video_file' => 'nullable|required_if:video_type,video_file|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$max_video_file_size,
+            'video_link' => 'nullable|required_if:video_type,video_url|url',
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Video upload error', 422, $validator->errors());
+        }
+
+        if($request->video_type == 'video_from_media'){
+            $media_file = [];
+        }
+        else{
+            $media_file = new MediaFile();
+
+            if($request->video_type == 'video_file'){ 
+                $file = $request->file('video_file');
+                $file_name = $request->video_name.'.'.$file->getClientOriginalExtension();
+
+                $file->storeAs('/videos/schools/'.$school_id, $file_name);          
+
+                $media_file->file_name = $file_name;
+                $media_file->file_type_id = 1;
+                $media_file->size = $file->getSize() / 1048576;
+            }
+            elseif($request->video_type == 'video_url'){
+                $media_file->file_name = $request->video_link;
+                $media_file->file_type_id = 2;
+                $media_file->size = null;
+            }
+
+            $media_file->school_id = $school_id;
+            $media_file->save();
+
+            $user_operation = new UserOperation();
+            $user_operation->operator_id = auth()->user()->user_id;
+            $user_operation->operation_type_id = 7;
+            $user_operation->save();
+        }
+
+        return $this->json('success', 'Upload video successful', 200, $media_file);
     }
-}
-
-
-
-public function store(Request $request){
-
-}
 
     /**
      * Display the specified resource.

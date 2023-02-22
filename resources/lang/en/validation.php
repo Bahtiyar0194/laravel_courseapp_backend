@@ -164,6 +164,8 @@ return [
         'course_cost'           => 'course cost',
         'course_poster'         => 'course poster',
 
+        'video_name'            => 'video name',
+
         'lesson_name'           => 'lesson name',
         'lesson_description'    => 'lesson description',
 

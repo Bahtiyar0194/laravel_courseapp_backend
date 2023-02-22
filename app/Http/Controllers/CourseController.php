@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\UserOperation;
+use App\Models\Language;
 
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
@@ -20,9 +21,12 @@ class CourseController extends Controller{
     }
 
     public function my_courses(Request $request){
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+        
         $my_courses = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
-        ->leftJoin('languages','course_categories_lang.lang_id','=','languages.lang_id')
+        ->leftJoin('languages','courses.course_lang_id','=','languages.lang_id')
+        ->leftJoin('languages_lang','languages.lang_id','=','languages_lang.lang_id')
         ->select(
             'courses.course_id',
             'courses.course_name',
@@ -31,20 +35,25 @@ class CourseController extends Controller{
             'courses.course_cost',
             'courses.created_at',
             'course_categories_lang.course_category_name',
-            'languages.lang_name'
+            'languages_lang.lang_name'
         )
         ->where('courses.school_id', auth()->user()->school_id)
         ->where('courses.show_status_id', 1)
-        ->where('languages.lang_tag', $request->header('Accept-Language'))
+        ->where('languages_lang.lang_tag', $language->lang_tag)
+        ->where('course_categories_lang.lang_id', $language->lang_id)
         ->get();
 
         return response()->json($my_courses, 200);
     }
 
     public function course(Request $request){
+
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+
         $course = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
-        ->leftJoin('languages','course_categories_lang.lang_id','=','languages.lang_id')
+        ->leftJoin('languages','courses.course_lang_id','=','languages.lang_id')
+        ->leftJoin('languages_lang','languages.lang_id','=','languages_lang.lang_id')
         ->select(
             'courses.course_id',
             'courses.course_name',
@@ -53,11 +62,12 @@ class CourseController extends Controller{
             'courses.course_cost',
             'courses.created_at',
             'course_categories_lang.course_category_name',
-            'languages.lang_name'
+            'languages_lang.lang_name'
         )
         ->where('courses.school_id', auth()->user()->school_id)
         ->where('courses.course_id', $request['course_id'])
-        ->where('languages.lang_tag', $request->header('Accept-Language'))
+        ->where('languages_lang.lang_tag', $language->lang_tag)
+        ->where('course_categories_lang.lang_id', $language->lang_id)
         ->first();
 
         if(isset($course)){

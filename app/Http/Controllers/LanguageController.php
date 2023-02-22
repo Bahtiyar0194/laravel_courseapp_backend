@@ -7,14 +7,20 @@ use App\Models\Language;
 
 class LanguageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+
+    public function __construct(Request $request){
+        app()->setLocale($request->header('Accept-Language'));
+    }
+
+    public function index(Request $request)
     {
-        $languages = Language::get();
+        $languages = Language::leftJoin('languages_lang', 'languages_lang.lang_id', '=', 'languages.lang_id')
+        ->select(
+            'languages.lang_id',
+            'languages_lang.lang_name'
+        )
+        ->where('languages_lang.lang_tag', $request->header('Accept-Language'))
+        ->get();
         return response()->json($languages, 200);
     }
 

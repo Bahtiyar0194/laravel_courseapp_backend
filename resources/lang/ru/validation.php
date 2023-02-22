@@ -191,6 +191,8 @@ return [
         'lesson_name'           => 'Название урока',
         'lesson_description'    => 'Описание урока',
 
+        'video_name'            => 'Название видео',
+
         'task_name'             => 'Название задания',
         'task_description'      => 'Описание задания',
 

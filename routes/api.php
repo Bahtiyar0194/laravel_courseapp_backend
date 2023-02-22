@@ -73,9 +73,10 @@ Route::group([
          Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
          Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
          Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
+         Route::post('/upload_video', [LessonController::class, 'upload_video'])->middleware('check_roles');
      });
 
-     Route::get('/video/{lesson_id}', [LessonController::class, 'get_video']);
+     Route::get('/video/{file_id}', [LessonController::class, 'get_video']);
  });
 
     Route::group([
