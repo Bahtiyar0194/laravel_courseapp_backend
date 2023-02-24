@@ -16,6 +16,7 @@ class CreateMediaFilesTable extends Migration
         Schema::create('media_files', function (Blueprint $table) {
             $table->increments('file_id');
             $table->string('file_name');
+            $table->string('file_target');
             $table->integer('file_type_id')->unsigned();
             $table->foreign('file_type_id')->references('file_type_id')->on('types_of_media_files');
             $table->integer('school_id')->unsigned();

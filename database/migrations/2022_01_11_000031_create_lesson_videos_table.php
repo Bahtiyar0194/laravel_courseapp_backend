@@ -17,8 +17,6 @@ class CreateLessonVideosTable extends Migration
             $table->increments('lesson_video_id');
             $table->integer('lesson_block_id')->unsigned();
             $table->foreign('lesson_block_id')->references('lesson_block_id')->on('lesson_blocks')->onDelete('cascade');
-            $table->integer('lesson_video_type_id')->unsigned();
-            $table->foreign('lesson_video_type_id')->references('lesson_video_type_id')->on('types_of_lesson_videos');
             $table->integer('file_id')->unsigned();
             $table->foreign('file_id')->references('file_id')->on('media_files')->onDelete('cascade');
             $table->timestamps();

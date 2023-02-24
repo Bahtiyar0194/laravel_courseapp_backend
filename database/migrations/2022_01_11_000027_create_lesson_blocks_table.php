@@ -19,7 +19,6 @@ class CreateLessonBlocksTable extends Migration
             $table->foreign('lesson_block_type_id')->references('lesson_block_type_id')->on('types_of_lesson_blocks');
             $table->integer('lesson_id')->unsigned();
             $table->foreign('lesson_id')->references('lesson_id')->on('lessons')->onDelete('cascade');
-            $table->integer('sort_num')->nullable();
             $table->timestamps();
         });
     }

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Lesson;
-use App\Models\LessonVideo;
 use App\Models\School;
+use App\Models\Lesson;
+use App\Models\LessonBlock;
+use App\Models\LessonText;
+use App\Models\LessonVideo;
 use App\Models\UserOperation;
 use App\Models\MediaFile;
 
@@ -24,7 +26,7 @@ class LessonController extends Controller{
     }
 
     public function get_lesson(Request $request){
-        $lesson = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
+        $find_lesson = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
         ->leftJoin('types_of_lessons','lessons.lesson_type_id','=','types_of_lessons.lesson_type_id')
         ->leftJoin('types_of_lessons_lang','types_of_lessons.lesson_type_id','=','types_of_lessons_lang.lesson_type_id')
         ->leftJoin('languages','types_of_lessons_lang.lang_id','=','languages.lang_id')
@@ -43,7 +45,52 @@ class LessonController extends Controller{
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->first();
 
-        if(isset($lesson)){
+        if(isset($find_lesson)){
+            $block_id = 0;
+            $blocks = [];
+            $lesson_blocks = LessonBlock::where('lesson_id', $find_lesson->lesson_id)->get();
+
+            foreach ($lesson_blocks as $key => $lesson_block) {
+
+                if($lesson_block->lesson_block_type_id == 1){
+                    $text = LessonText::where('lesson_block_id', $lesson_block->lesson_block_id)
+                    ->first();
+                    if(isset($text)){
+                        $text_block = [
+                            'block_id' => $block_id + 1,
+                            'block_type_id' => $lesson_block->lesson_block_type_id,
+                            'content' => $text->content
+                        ];
+                        array_push($blocks, $text_block);
+                    }
+                }
+                elseif($lesson_block->lesson_block_type_id == 2){
+                    $video = LessonVideo::leftJoin('media_files','lesson_videos.file_id','=','media_files.file_id')
+                    ->where('lesson_videos.lesson_block_id', $lesson_block->lesson_block_id)
+                    ->select(
+                        'media_files.file_type_id',
+                        'media_files.file_name',
+                        'media_files.file_id'
+                    )
+                    ->first();
+                    if(isset($video)){
+                        $video_block = [
+                            'block_id' => $block_id + 1,
+                            'file_type_id' => $video->file_type_id,
+                            'file_id' => $video->file_id,
+                            'file_name' => $video->file_name
+                        ];
+                        array_push($blocks, $video_block);
+                    }
+                }
+
+            }
+
+            $lesson = [
+                'lesson' => $find_lesson,
+                'lesson_blocks' => $blocks
+            ];
+
             return response()->json($lesson, 200);
         }
         else{
@@ -99,16 +146,12 @@ class LessonController extends Controller{
      */
     public function create(Request $request){
 
-        $max_video_file_size = 100;
-
         $validator = Validator::make($request->all(), [
             'lesson_name' => 'required|string|between:3, 300',
-            'lesson_description' => 'required_unless:lesson_type_id,3|string|min:10',
+            'lesson_description' => 'required_unless:lesson_type_id,2|string|min:10',
             'lesson_type_id' => 'required',
-            'course_id' => 'required',
-            'video_type' => 'required_if:lesson_type_id,2',
-            'video_file' => 'nullable|required_if:video_type,video_file|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$max_video_file_size,
-            'video_link' => 'nullable|required_if:video_type,video_url|url',
+            'lesson_blocks' => 'required_unless:lesson_type_id,2|min:3',
+            'course_id' => 'required'
         ]);
 
         if($validator->fails()){
@@ -126,33 +169,53 @@ class LessonController extends Controller{
         $new_lesson->sort_num = $sort_num;
         $new_lesson->save();
 
+        if($request->lesson_type_id != 2){
 
-        //Если тип урока видеоурок
-        if($request->lesson_type_id == 2){
+            $lesson_blocks = json_decode($request->lesson_blocks);
 
-            if($request->video_type == 'video_file'){
-                $file = $request->file('video_file');
-                $file_size = $request->file('video_file')->getSize() / 1048576;
-                $file_name = $file->hashName();
-                $file->storeAs('/videos/lessons/'.$new_lesson->lesson_id, $file_name);                
-                $content = $file_name;
-                $lesson_video_type_id = 1;
+            foreach ($lesson_blocks as $key => $lesson_block) {
+
+                if(isset($lesson_block->block_type_id)){
+                    if($lesson_block->block_type_id == 1){
+                        $block_type = 'text';
+                    }
+                }
+
+                if(isset($lesson_block->file_type_id)){
+                    if($lesson_block->file_type_id == 1 || $lesson_block->file_type_id == 2){
+                        $block_type = 'video';
+                    }
+                }
+
+                $new_lesson_block = new LessonBlock();
+
+                if($block_type == 'text'){
+                    $new_lesson_block->lesson_block_type_id = 1;
+                }
+
+                if($block_type == 'video'){
+                    $new_lesson_block->lesson_block_type_id = 2;
+                }
+
+                $new_lesson_block->lesson_id = $new_lesson->lesson_id;
+                $new_lesson_block->save();
+
+                if($block_type == 'text'){
+                    $new_lesson_text = new LessonText();
+                    $new_lesson_text->lesson_block_id = $new_lesson_block->lesson_block_id;
+                    $new_lesson_text->content = $lesson_block->content;
+                    $new_lesson_text->save();
+                }
+
+
+                if($block_type == 'video'){
+                    $new_lesson_video = new LessonVideo();
+                    $new_lesson_video->lesson_block_id = $new_lesson_block->lesson_block_id;
+                    $new_lesson_video->file_id = $lesson_block->file_id;
+                    $new_lesson_video->save();
+                }
             }
-            elseif($request->video_type == 'video_url'){
-                $file_size = null;
-                $content = $request->video_link;
-                $lesson_video_type_id = 2;
-            }
 
-            $new_lesson_video = new LessonVideo();
-            $new_lesson_video->lesson_id = $new_lesson->lesson_id;
-            $new_lesson_video->lesson_video_type_id = $lesson_video_type_id;
-            $new_lesson_video->content = $content;
-            $new_lesson_video->size = $file_size;
-            $new_lesson_video->save();
-        }
-
-        if($request->lesson_type_id != 3){
             $user_operation = new UserOperation();
             $user_operation->operator_id = auth()->user()->user_id;
             $user_operation->operation_type_id = 4;
@@ -176,59 +239,6 @@ class LessonController extends Controller{
     }
 
 
-    public function get_video(Request $request){
-
-        $origin = parse_url($request->header('Referer'));
-
-        if(isset($origin['host'])){
-            $host = $origin['host'];
-            $parts = explode('.', $host);
-
-            if(count($parts) == 2){
-                $subdomain = $parts[0];
-                $school = School::where('school_domain', $subdomain)->first();
-
-                if(isset($school)){
-                    $file_id = $request->file_id;
-
-                    $video_file = MediaFile::where('school_id', $school->school_id)
-                    ->where('file_id', $file_id)
-                    ->first();
-
-                    if(isset($video_file)){
-
-                        $path = storage_path('/app/videos/schools/'.$school->school_id.'/'.$video_file->file_name);
-
-                        if (!File::exists($path)) {
-                            return response()->json('Video not found', 404);
-                        }
-
-                        $file = File::get($path);
-                        $type = File::mimeType($path);
-
-                        $response = Response::make($file, 200);
-                        $response->header("Content-Type", $type);
-                        return $response;
-                    }
-                    else{
-                        return response()->json('Access denied', 403);
-                    }
-                }
-                else{
-                    return response()->json('Access denied', 403);
-                }
-            }
-            else{
-                return response()->json('Access denied', 403);
-            }
-        }
-        else{
-            return response()->json('Access denied', 403);
-        }
-    }
-
-
-
     public function upload_video(Request $request){
         $max_video_file_size = 100;
         $school_id = auth()->user()->school_id;
@@ -249,19 +259,20 @@ class LessonController extends Controller{
         }
         else{
             $media_file = new MediaFile();
+            $media_file->file_name = $request->video_name;
 
             if($request->video_type == 'video_file'){ 
                 $file = $request->file('video_file');
-                $file_name = $request->video_name.'.'.$file->getClientOriginalExtension();
+                $file_target = $file->hashName();
 
-                $file->storeAs('/videos/schools/'.$school_id, $file_name);          
-
-                $media_file->file_name = $file_name;
+                $media_file->file_target = $file_target;
                 $media_file->file_type_id = 1;
                 $media_file->size = $file->getSize() / 1048576;
+
+                $file->storeAs('/videos/schools/'.$school_id, $file_target);  
             }
             elseif($request->video_type == 'video_url'){
-                $media_file->file_name = $request->video_link;
+                $media_file->file_target = $request->video_link;
                 $media_file->file_type_id = 2;
                 $media_file->size = null;
             }
@@ -276,6 +287,62 @@ class LessonController extends Controller{
         }
 
         return $this->json('success', 'Upload video successful', 200, $media_file);
+    }
+
+
+    public function get_video(Request $request){
+
+        $origin = parse_url($request->header('Referer'));
+
+        if(isset($origin['host'])){
+            $host = $origin['host'];
+            $parts = explode('.', $host);
+
+            if(count($parts) == 2){
+                $subdomain = $parts[0];
+                $school = School::where('school_domain', $subdomain)->first();
+
+                if(isset($school)){
+                    $file_id = $request->file_id;
+
+                    $video_file = MediaFile::where('school_id', $school->school_id)
+                    ->where('file_id', $file_id)
+                    ->first();
+
+                    if(isset($video_file)){
+                        if($video_file->file_type_id == 1){
+                            $path = storage_path('/app/videos/schools/'.$school->school_id.'/'.$video_file->file_target);
+
+                            if (!File::exists($path)) {
+                                return response()->json('Video not found', 404);
+                            }
+
+                            $file = File::get($path);
+                            $type = File::mimeType($path);
+
+                            $response = Response::make($file, 200);
+                            $response->header("Content-Type", $type);
+                        }
+                        elseif($video_file->file_type_id == 2){
+                            $response = $video_file->file_target;
+                        }
+                        return $response;
+                    }
+                    else{
+                        return response()->json('Access denied', 403);
+                    }
+                }
+                else{
+                    return response()->json('Access denied', 403);
+                }
+            }
+            else{
+                return response()->json('Access denied', 403);
+            }
+        }
+        else{
+            return response()->json('Access denied', 403);
+        }
     }
 
     /**
