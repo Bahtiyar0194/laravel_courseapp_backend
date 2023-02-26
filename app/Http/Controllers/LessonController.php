@@ -46,7 +46,6 @@ class LessonController extends Controller{
         ->first();
 
         if(isset($find_lesson)){
-            $block_id = 0;
             $blocks = [];
             $lesson_blocks = LessonBlock::where('lesson_id', $find_lesson->lesson_id)->get();
 
@@ -57,7 +56,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($text)){
                         $text_block = [
-                            'block_id' => $block_id + 1,
+                            'block_id' => $key,
                             'block_type_id' => $lesson_block->lesson_block_type_id,
                             'content' => $text->content
                         ];
@@ -75,7 +74,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($video)){
                         $video_block = [
-                            'block_id' => $block_id + 1,
+                            'block_id' => $key,
                             'file_type_id' => $video->file_type_id,
                             'file_id' => $video->file_id,
                             'file_name' => $video->file_name
@@ -94,7 +93,7 @@ class LessonController extends Controller{
             return response()->json($lesson, 200);
         }
         else{
-            return response()->json('Not found', 404);
+            return response()->json('Lesson not found', 404);
         }
     }
 
@@ -171,50 +170,8 @@ class LessonController extends Controller{
 
         if($request->lesson_type_id != 2){
 
-            $lesson_blocks = json_decode($request->lesson_blocks);
-
-            foreach ($lesson_blocks as $key => $lesson_block) {
-
-                if(isset($lesson_block->block_type_id)){
-                    if($lesson_block->block_type_id == 1){
-                        $block_type = 'text';
-                    }
-                }
-
-                if(isset($lesson_block->file_type_id)){
-                    if($lesson_block->file_type_id == 1 || $lesson_block->file_type_id == 2){
-                        $block_type = 'video';
-                    }
-                }
-
-                $new_lesson_block = new LessonBlock();
-
-                if($block_type == 'text'){
-                    $new_lesson_block->lesson_block_type_id = 1;
-                }
-
-                if($block_type == 'video'){
-                    $new_lesson_block->lesson_block_type_id = 2;
-                }
-
-                $new_lesson_block->lesson_id = $new_lesson->lesson_id;
-                $new_lesson_block->save();
-
-                if($block_type == 'text'){
-                    $new_lesson_text = new LessonText();
-                    $new_lesson_text->lesson_block_id = $new_lesson_block->lesson_block_id;
-                    $new_lesson_text->content = $lesson_block->content;
-                    $new_lesson_text->save();
-                }
-
-
-                if($block_type == 'video'){
-                    $new_lesson_video = new LessonVideo();
-                    $new_lesson_video->lesson_block_id = $new_lesson_block->lesson_block_id;
-                    $new_lesson_video->file_id = $lesson_block->file_id;
-                    $new_lesson_video->save();
-                }
-            }
+            //App/Helpers
+            create_lesson_blocks($new_lesson->lesson_id, json_decode($request->lesson_blocks));
 
             $user_operation = new UserOperation();
             $user_operation->operator_id = auth()->user()->user_id;
@@ -223,6 +180,54 @@ class LessonController extends Controller{
         }
 
         return $this->json('success', 'Lesson create successful', 200, $new_lesson);
+    }
+
+
+    public function edit(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'lesson_name' => 'required|string|between:3, 300',
+            'lesson_description' => 'required_unless:lesson_type_id,2|string|min:10',
+            'lesson_type_id' => 'required',
+            'lesson_blocks' => 'required_unless:lesson_type_id,2|min:3'
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Lesson update error', 422, $validator->errors());
+        }
+
+        $find_lesson = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
+        ->where('courses.school_id', auth()->user()->school_id)
+        ->where('lessons.lesson_id', $request['lesson_id'])
+        ->first();
+
+        if(isset($find_lesson)){
+            $edit_lesson = Lesson::find($find_lesson->lesson_id);
+            $edit_lesson->lesson_name = $request->lesson_name;
+
+            if($find_lesson->lesson_type_id != 2){
+
+                $edit_lesson->lesson_description = $request->lesson_description;
+
+                LessonBlock::where('lesson_id', $find_lesson->lesson_id)
+                ->delete();
+
+                //App/Helpers
+                create_lesson_blocks($find_lesson->lesson_id, json_decode($request->lesson_blocks));
+
+                $user_operation = new UserOperation();
+                $user_operation->operator_id = auth()->user()->user_id;
+                $user_operation->operation_type_id = 10;
+                $user_operation->save();
+            }
+
+            $edit_lesson->save();
+
+            return $this->json('success', 'Lesson update successful', 200, 'success');
+        }
+        else{
+            return response()->json('Lesson not found', 404);
+        }
     }
 
 
@@ -345,46 +350,6 @@ class LessonController extends Controller{
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
         //
