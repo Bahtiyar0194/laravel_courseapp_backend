@@ -22,7 +22,7 @@ class CourseController extends Controller{
 
     public function my_courses(Request $request){
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
-        
+
         $my_courses = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
         ->leftJoin('languages','courses.course_lang_id','=','languages.lang_id')
@@ -105,7 +105,7 @@ class CourseController extends Controller{
         if(isset($request->course_poster)){
             $file = $request->file('course_poster');
             $file_name = $file->hashName();
-            $file->storeAs('/images/posters', $file_name);
+            $file->storeAs('/images/', $file_name);
         }
         else{
             $file_name = 'default.svg';
@@ -131,7 +131,7 @@ class CourseController extends Controller{
 
 
     public function poster($file_name){
-        $path = storage_path('/app/images/posters/' . $file_name);
+        $path = storage_path('/app/images/'.$file_name);
 
         if (!File::exists($path)) {
             return response()->json('Not found', 404);

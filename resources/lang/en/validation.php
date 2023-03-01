@@ -86,8 +86,8 @@ return [
     // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
     'max_mb' => 'The :attribute may not be greater than :max_mb megabytes.',
 
-    'mimes' => 'The :attribute must be a file of type: :values.',
-    'mimetypes' => 'The :attribute must be a file of type: :values.',
+    'mimes' => 'The file of type must be a format: :values.',
+    'mimetypes' => 'The file of type must be a format: :values.',
     'min' => [
         'numeric' => 'The :attribute must be at least :min.',
         'file' => 'The :attribute must be at least :min kilobytes.',
@@ -141,6 +141,9 @@ return [
         'video_link' => [
             'required_if' => 'Enter the link',
         ],
+        'image_file' => [
+            'required' => 'Please, attach an image file',
+        ],
     ],
 
     /*
@@ -165,6 +168,7 @@ return [
         'course_poster'         => 'course poster',
 
         'video_name'            => 'video name',
+        'audio_name'            => 'audio name',
 
         'lesson_name'           => 'lesson name',
         'lesson_description'    => 'lesson description',

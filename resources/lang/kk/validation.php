@@ -85,8 +85,8 @@ return [
     // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
     'max_mb' => ':attribute :max_mb мегабайттан көп болмауы керек.',
 
-    'mimes'                => ' :attribute мынадай файл түрі болуы керек: :values.',
-    'mimetypes'            => ' :attribute мынадай файл түрі болуы керек: :values.',
+    'mimes'                => 'Файлдың түрі: :values болуы керек.',
+    'mimetypes'            => 'Файлдың түрі: :values болуы керек.',
     'min'                  => [
         'numeric' => ' :attribute кемінде :min болуы керек.',
         'file'    => ' :attribute көлемі кемінде :min килобайт болуы керек.',
@@ -135,10 +135,16 @@ return [
 
     'custom' => [
         'video_file' => [
-            'required_if' => 'Бейне файлды тіркеңіз',
+            'required_if' => 'Бейнежазбаны таңдаңыз',
         ],
         'video_link' => [
             'required_if' => 'Сілтемені енгізіңіз',
+        ],
+        'audio_file' => [
+            'required' => 'Выберите аудиофайл',
+        ],
+        'image_file' => [
+            'required' => 'Кескінді таңдаңыз',
         ],
     ],
 
@@ -176,6 +182,8 @@ return [
         'lesson_description'    => 'Сабақтың қысқаша сипаттамасы',
 
         'video_name'            => 'Бейнежазбаның аты',
+        'audio_name'            => 'Дыбыстың аты',
+        'image_name'            => 'Кескіннің аты',
 
         'task_name'             => 'Тапсырманың аты',
         'task_description'      => 'Тапсырманың қысқаша сипаттамасы',

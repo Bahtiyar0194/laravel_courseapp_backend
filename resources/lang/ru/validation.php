@@ -86,8 +86,8 @@ return [
     // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
     'max_mb' => 'Размер файла не может быть больше :max_mb мегабайт(а).',
 
-    'mimes'                => 'Поле ":attribute" должно быть файлом одного из следующих типов: :values.',
-    'mimetypes'            => 'Поле ":attribute" должно быть файлом одного из следующих типов: :values.',
+    'mimes'                => 'Файл должен быть формата: :values.',
+    'mimetypes'            => 'Файл должен быть формата: :values.',
     'min'                  => [
         'numeric' => 'Поле ":attribute" должно быть не меньше :min.',
         'file'    => 'Размер файла в поле ":attribute" должен быть не меньше :min килобайт(а).',
@@ -144,10 +144,16 @@ return [
 
     'custom' => [
         'video_file' => [
-            'required_if' => 'Пожалуйста, приложите видеофайл',
+            'required_if' => 'Выберите видеофайл',
         ],
         'video_link' => [
             'required_if' => 'Укажите ссылку от видео',
+        ],
+        'audio_file' => [
+            'required' => 'Выберите аудиофайл',
+        ],
+        'image_file' => [
+            'required' => 'Выберите файл изображения',
         ],
     ],
 
@@ -192,6 +198,9 @@ return [
         'lesson_description'    => 'Описание урока',
 
         'video_name'            => 'Название видео',
+        'audio_name'            => 'Название аудио',
+
+        'image_name'            => 'Название изображения',
 
         'task_name'             => 'Название задания',
         'task_description'      => 'Описание задания',

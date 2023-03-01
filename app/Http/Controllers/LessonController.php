@@ -6,7 +6,9 @@ use App\Models\School;
 use App\Models\Lesson;
 use App\Models\LessonBlock;
 use App\Models\LessonText;
+use App\Models\LessonImage;
 use App\Models\LessonVideo;
+use App\Models\LessonAudio;
 use App\Models\UserOperation;
 use App\Models\MediaFile;
 
@@ -80,6 +82,46 @@ class LessonController extends Controller{
                             'file_name' => $video->file_name
                         ];
                         array_push($blocks, $video_block);
+                    }
+                }
+                elseif($lesson_block->lesson_block_type_id == 3){
+                    $audio = LessonAudio::leftJoin('media_files','lesson_audios.file_id','=','media_files.file_id')
+                    ->where('lesson_audios.lesson_block_id', $lesson_block->lesson_block_id)
+                    ->select(
+                        'media_files.file_type_id',
+                        'media_files.file_name',
+                        'media_files.file_id'
+                    )
+                    ->first();
+                    if(isset($audio)){
+                        $audio_block = [
+                            'block_id' => $key,
+                            'file_type_id' => $audio->file_type_id,
+                            'file_id' => $audio->file_id,
+                            'file_name' => $audio->file_name,
+                        ];
+                        array_push($blocks, $audio_block);
+                    }
+                }
+                elseif($lesson_block->lesson_block_type_id == 4){
+                    $image = LessonImage::leftJoin('media_files','lesson_images.file_id','=','media_files.file_id')
+                    ->where('lesson_images.lesson_block_id', $lesson_block->lesson_block_id)
+                    ->select(
+                        'media_files.file_type_id',
+                        'media_files.file_name',
+                        'media_files.file_id',
+                        'lesson_images.image_width'
+                    )
+                    ->first();
+                    if(isset($image)){
+                        $image_block = [
+                            'block_id' => $key,
+                            'file_type_id' => $image->file_type_id,
+                            'file_id' => $image->file_id,
+                            'file_name' => $image->file_name,
+                            'image_width' => $image->image_width
+                        ];
+                        array_push($blocks, $image_block);
                     }
                 }
 
@@ -169,7 +211,6 @@ class LessonController extends Controller{
         $new_lesson->save();
 
         if($request->lesson_type_id != 2){
-
             //App/Helpers
             create_lesson_blocks($new_lesson->lesson_id, json_decode($request->lesson_blocks));
 
@@ -206,7 +247,6 @@ class LessonController extends Controller{
             $edit_lesson->lesson_name = $request->lesson_name;
 
             if($find_lesson->lesson_type_id != 2){
-
                 $edit_lesson->lesson_description = $request->lesson_description;
 
                 LessonBlock::where('lesson_id', $find_lesson->lesson_id)
@@ -243,6 +283,66 @@ class LessonController extends Controller{
         return response()->json('Success', 200);
     }
 
+
+    public function upload_image(Request $request){
+        $max_image_file_size = 1;
+        $school_id = auth()->user()->school_id;
+
+        $validator = Validator::make($request->all(), [
+            'image_name' => 'required|string|between:3, 100',
+            'image_file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Image upload error', 422, $validator->errors());
+        }
+
+        $media_file = new MediaFile();
+        $media_file->file_name = $request->image_name;
+
+        $file = $request->file('image_file');
+        $file_target = $file->hashName();
+
+        $media_file->file_target = $file_target;
+        $media_file->file_type_id = 4;
+        $media_file->size = $file->getSize() / 1048576;
+
+        $file->storeAs('/images/', $file_target);
+
+        $media_file->school_id = $school_id;
+        $media_file->save();
+
+        $user_operation = new UserOperation();
+        $user_operation->operator_id = auth()->user()->user_id;
+        $user_operation->operation_type_id = 9;
+        $user_operation->save();
+        
+        return $this->json('success', 'Upload image successful', 200, $media_file);
+    }
+
+    public function get_image(Request $request){
+        $image_file = MediaFile::where('file_id', $request->file_id)
+        ->first();
+
+        if(isset($image_file)){
+            $path = storage_path('/app/images/'.$image_file->file_target);
+
+            if (!File::exists($path)) {
+                return response()->json('Image not found', 404);
+            }
+
+            $file = File::get($path);
+            $type = File::mimeType($path);
+
+            $response = Response::make($file, 200);
+            $response->header("Content-Type", $type);
+
+            return $response;
+        }
+        else{
+            return response()->json('Access denied', 403);
+        }
+    }
 
     public function upload_video(Request $request){
         $max_video_file_size = 100;
@@ -294,7 +394,6 @@ class LessonController extends Controller{
         return $this->json('success', 'Upload video successful', 200, $media_file);
     }
 
-
     public function get_video(Request $request){
 
         $origin = parse_url($request->header('Referer'));
@@ -331,6 +430,98 @@ class LessonController extends Controller{
                         elseif($video_file->file_type_id == 2){
                             $response = $video_file->file_target;
                         }
+                        return $response;
+                    }
+                    else{
+                        return response()->json('Access denied', 403);
+                    }
+                }
+                else{
+                    return response()->json('Access denied', 403);
+                }
+            }
+            else{
+                return response()->json('Access denied', 403);
+            }
+        }
+        else{
+            return response()->json('Access denied', 403);
+        }
+    }
+
+
+    public function upload_audio(Request $request){
+        $max_audio_file_size = 10;
+        $school_id = auth()->user()->school_id;
+
+        $validator = Validator::make($request->all(), [
+            'audio_name' => 'required|string|between:3, 100',
+            'audio_file' => 'required|file|mimes:mp3,m4a,opus,oga,flac,ogg,webm,weba,wav,wma|max_mb:'.$max_audio_file_size,
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Audio upload error', 422, $validator->errors());
+        }
+
+        if($request->video_type == 'audio_from_media'){
+            $media_file = [];
+        }
+        else{
+            $media_file = new MediaFile();
+            $media_file->file_name = $request->audio_name;
+
+            $file = $request->file('audio_file');
+            $file_target = $file->hashName();
+
+            $media_file->file_target = $file_target;
+            $media_file->file_type_id = 3;
+            $media_file->size = $file->getSize() / 1048576;
+
+            $file->storeAs('/audios/schools/'.$school_id, $file_target);  
+
+            $media_file->school_id = $school_id;
+            $media_file->save();
+
+            $user_operation = new UserOperation();
+            $user_operation->operator_id = auth()->user()->user_id;
+            $user_operation->operation_type_id = 8;
+            $user_operation->save();
+        }
+
+        return $this->json('success', 'Upload audio successful', 200, $media_file);
+    }
+
+    public function get_audio(Request $request){
+
+        $origin = parse_url($request->header('Referer'));
+
+        if(isset($origin['host'])){
+            $host = $origin['host'];
+            $parts = explode('.', $host);
+
+            if(count($parts) == 2){
+                $subdomain = $parts[0];
+                $school = School::where('school_domain', $subdomain)->first();
+
+                if(isset($school)){
+                    $file_id = $request->file_id;
+
+                    $audio_file = MediaFile::where('school_id', $school->school_id)
+                    ->where('file_id', $file_id)
+                    ->first();
+
+                    if(isset($audio_file)){
+                        $path = storage_path('/app/audios/schools/'.$school->school_id.'/'.$audio_file->file_target);
+
+                        if (!File::exists($path)) {
+                            return response()->json('Audio not found', 404);
+                        }
+
+                        $file = File::get($path);
+                        $type = File::mimeType($path);
+
+                        $response = Response::make($file, 200);
+                        $response->header("Content-Type", $type);
                         return $response;
                     }
                     else{
