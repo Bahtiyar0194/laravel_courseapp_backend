@@ -2,6 +2,7 @@
 use App\Models\LessonBlock;
 use App\Models\LessonText;
 use App\Models\LessonTable;
+use App\Models\LessonCode;
 use App\Models\LessonImage;
 use App\Models\LessonVideo;
 use App\Models\LessonAudio;
@@ -16,6 +17,9 @@ if (!function_exists('create_lesson_blocks')){
 				}
 				elseif($lesson_block->block_type_id == 5){
 					$block_type = 'table';
+				}
+				elseif($lesson_block->block_type_id == 6){
+					$block_type = 'code';
 				}
 			}
 
@@ -55,6 +59,10 @@ if (!function_exists('create_lesson_blocks')){
 				$new_lesson_block->lesson_block_type_id = 5;
 			}
 
+			if($block_type == 'code'){
+				$new_lesson_block->lesson_block_type_id = 6;
+			}
+
 			$new_lesson_block->lesson_id = $lesson_id;
 			$new_lesson_block->save();
 
@@ -92,6 +100,15 @@ if (!function_exists('create_lesson_blocks')){
 				$new_lesson_table->lesson_block_id = $new_lesson_block->lesson_block_id;
 				$new_lesson_table->content = str_replace(' contenteditable="true"', '', $lesson_block->content);
 				$new_lesson_table->save();
+			}
+
+			if($block_type == 'code'){
+				$new_lesson_code = new LessonCode();
+				$new_lesson_code->lesson_block_id = $new_lesson_block->lesson_block_id;
+				$new_lesson_code->code = $lesson_block->code;
+				$new_lesson_code->code_language = $lesson_block->code_language;
+				$new_lesson_code->code_theme = $lesson_block->code_theme;
+				$new_lesson_code->save();
 			}
 		}
 	}
