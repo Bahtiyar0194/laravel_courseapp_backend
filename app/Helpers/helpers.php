@@ -1,6 +1,7 @@
 <?php 
 use App\Models\LessonBlock;
 use App\Models\LessonText;
+use App\Models\LessonTable;
 use App\Models\LessonImage;
 use App\Models\LessonVideo;
 use App\Models\LessonAudio;
@@ -12,6 +13,9 @@ if (!function_exists('create_lesson_blocks')){
 			if(isset($lesson_block->block_type_id)){
 				if($lesson_block->block_type_id == 1){
 					$block_type = 'text';
+				}
+				elseif($lesson_block->block_type_id == 5){
+					$block_type = 'table';
 				}
 			}
 
@@ -47,6 +51,10 @@ if (!function_exists('create_lesson_blocks')){
 				$new_lesson_block->lesson_block_type_id = 4;
 			}
 
+			if($block_type == 'table'){
+				$new_lesson_block->lesson_block_type_id = 5;
+			}
+
 			$new_lesson_block->lesson_id = $lesson_id;
 			$new_lesson_block->save();
 
@@ -77,6 +85,13 @@ if (!function_exists('create_lesson_blocks')){
 				$new_lesson_audio->lesson_block_id = $new_lesson_block->lesson_block_id;
 				$new_lesson_audio->file_id = $lesson_block->file_id;
 				$new_lesson_audio->save();
+			}
+
+			if($block_type == 'table'){
+				$new_lesson_table = new LessonTable();
+				$new_lesson_table->lesson_block_id = $new_lesson_block->lesson_block_id;
+				$new_lesson_table->content = str_replace(' contenteditable="true"', '', $lesson_block->content);
+				$new_lesson_table->save();
 			}
 		}
 	}

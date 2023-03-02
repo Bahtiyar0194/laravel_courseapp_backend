@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\Lesson;
 use App\Models\LessonBlock;
 use App\Models\LessonText;
+use App\Models\LessonTable;
 use App\Models\LessonImage;
 use App\Models\LessonVideo;
 use App\Models\LessonAudio;
@@ -124,7 +125,18 @@ class LessonController extends Controller{
                         array_push($blocks, $image_block);
                     }
                 }
-
+                if($lesson_block->lesson_block_type_id == 5){
+                    $table = LessonTable::where('lesson_block_id', $lesson_block->lesson_block_id)
+                    ->first();
+                    if(isset($table)){
+                        $table_block = [
+                            'block_id' => $key,
+                            'block_type_id' => $lesson_block->lesson_block_type_id,
+                            'content' => $table->content
+                        ];
+                        array_push($blocks, $table_block);
+                    }
+                }
             }
 
             $lesson = [
