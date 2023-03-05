@@ -60,7 +60,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($text)){
                         $text_block = [
-                            'block_id' => $key,
+                            'block_id' => $key + 1,
                             'block_type_id' => $lesson_block->lesson_block_type_id,
                             'content' => $text->content
                         ];
@@ -78,7 +78,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($video)){
                         $video_block = [
-                            'block_id' => $key,
+                            'block_id' => $key + 1,
                             'file_type_id' => $video->file_type_id,
                             'file_id' => $video->file_id,
                             'file_name' => $video->file_name
@@ -97,7 +97,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($audio)){
                         $audio_block = [
-                            'block_id' => $key,
+                            'block_id' => $key + 1,
                             'file_type_id' => $audio->file_type_id,
                             'file_id' => $audio->file_id,
                             'file_name' => $audio->file_name,
@@ -117,7 +117,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($image)){
                         $image_block = [
-                            'block_id' => $key,
+                            'block_id' => $key + 1,
                             'file_type_id' => $image->file_type_id,
                             'file_id' => $image->file_id,
                             'file_name' => $image->file_name,
@@ -131,7 +131,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($table)){
                         $table_block = [
-                            'block_id' => $key,
+                            'block_id' => $key + 1,
                             'block_type_id' => $lesson_block->lesson_block_type_id,
                             'content' => $table->content
                         ];
@@ -144,7 +144,7 @@ class LessonController extends Controller{
                     ->first();
                     if(isset($code)){
                         $code_block = [
-                            'block_id' => $key,
+                            'block_id' => $key + 1,
                             'block_type_id' => $lesson_block->lesson_block_type_id,
                             'code' => $code->code,
                             'code_language' => $code->code_language,
