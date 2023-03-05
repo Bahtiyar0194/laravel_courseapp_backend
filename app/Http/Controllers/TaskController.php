@@ -30,9 +30,9 @@ class TaskController extends Controller{
     public function create(Request $request){
         $validator = Validator::make($request->all(), [
             'task_name' => 'required|string|between:3, 300',
-            'task_description' => 'nullable|required_unless:task_type_id,1|string|max:1000',
+            'task_description' => 'required|string|max:1000',
             'task_type_id' => 'required',
-            'lesson_id' => 'required',
+            'test_questions' => 'required_unless:task_type_id,1|min:3',
             'operation_type_id' => 'required'
         ]);
 
@@ -40,12 +40,12 @@ class TaskController extends Controller{
             return $this->json('error', 'Task create error', 422, $validator->errors());
         }
 
-        $new_task = new LessonTask();
-        $new_task->task_name = $request->task_name;
-        $new_task->task_description = $request->task_description;
-        $new_task->lesson_id = $request->lesson_id;
-        $new_task->task_type_id = $request->task_type_id;
-        $new_task->save();
+        // $new_task = new LessonTask();
+        // $new_task->task_name = $request->task_name;
+        // $new_task->task_description = $request->task_description;
+        // $new_task->lesson_id = $request->lesson_id;
+        // $new_task->task_type_id = $request->task_type_id;
+        // $new_task->save();
 
     }
 

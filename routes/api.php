@@ -88,8 +88,7 @@ Route::group([
         'prefix' => 'tasks'
     ], function ($router){
        Route::group(['middleware' => ['auth:sanctum']], function () {
-           Route::post('/create', [TaskController::class, 'create'])->middleware('check_roles');
-           Route::get('/my_tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
+           Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
        });
    });
 });
