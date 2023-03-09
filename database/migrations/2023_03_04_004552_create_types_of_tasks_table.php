@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTypesOfLessonVideosTable extends Migration
+class CreateTypesOfTasksTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,9 @@ class CreateTypesOfLessonVideosTable extends Migration
      */
     public function up()
     {
-        Schema::create('types_of_lesson_videos', function (Blueprint $table) {
-            $table->increments('lesson_video_type_id');
-            $table->string('lesson_video_type_slug');
+        Schema::create('types_of_tasks', function (Blueprint $table) {
+            $table->increments('task_type_id');
+            $table->string('task_type_slug');
             $table->integer('show_status_id')->default(1)->unsigned();
             $table->foreign('show_status_id')->references('show_status_id')->on('show_status');
             $table->timestamps();
@@ -29,6 +29,6 @@ class CreateTypesOfLessonVideosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('types_of_lesson_videos');
+        Schema::dropIfExists('types_of_tasks');
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\LessonTask;
+use App\Models\TestQuestion;
+use App\Models\TestQuestionAnswer;
 use Illuminate\Http\Request;
 
 use App\Traits\ApiResponser;
@@ -32,7 +34,8 @@ class TaskController extends Controller{
             'task_name' => 'required|string|between:3, 300',
             'task_description' => 'required|string|max:1000',
             'task_type_id' => 'required',
-            'test_questions' => 'required_unless:task_type_id,1|min:3',
+            'test_question_blocks' => 'required_unless:task_type_id,1|min:3',
+            'test_question_blocks_error' => 'required|declined',
             'operation_type_id' => 'required'
         ]);
 
@@ -40,14 +43,40 @@ class TaskController extends Controller{
             return $this->json('error', 'Task create error', 422, $validator->errors());
         }
 
-        // $new_task = new LessonTask();
-        // $new_task->task_name = $request->task_name;
-        // $new_task->task_description = $request->task_description;
-        // $new_task->lesson_id = $request->lesson_id;
-        // $new_task->task_type_id = $request->task_type_id;
-        // $new_task->save();
+        $new_task = new LessonTask();
+        $new_task->task_name = $request->task_name;
+        $new_task->task_description = $request->task_description;
+        $new_task->lesson_id = $request->lesson_id;
+        $new_task->task_type_id = $request->task_type_id;
+        $new_task->save();
 
-    }
+        $test_question_blocks = json_decode($request->test_question_blocks);
+
+        foreach ($test_question_blocks as $key => $block) {
+            $new_question = new TestQuestion();
+            $new_question->question = $block->question;
+            $new_question->task_id = $new_task->task_id;
+            $new_question->save();
+
+            foreach ($block->answers as $key => $answer) {
+                $new_question_answer = new TestQuestionAnswer();
+                $new_question_answer->answer = $answer->answer_value;
+                $new_question_answer->question_id = $new_question->question_id;
+                if($answer->checked == true){
+                    $new_question_answer->is_correct = 1;
+                }
+                else{
+                  $new_question_answer->is_correct = 0;
+              }
+              $new_question_answer->save();
+          }
+      }
+
+
+
+      return $this->json('success', 'Task create success', 200, 'success');
+
+  }
 
 
 }
