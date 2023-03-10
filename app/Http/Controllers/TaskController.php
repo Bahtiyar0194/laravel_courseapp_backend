@@ -50,33 +50,34 @@ class TaskController extends Controller{
         $new_task->task_type_id = $request->task_type_id;
         $new_task->save();
 
-        $test_question_blocks = json_decode($request->test_question_blocks);
+        if($request->task_type_id == 1){
+            $test_question_blocks = json_decode($request->test_question_blocks);
 
-        foreach ($test_question_blocks as $key => $block) {
-            $new_question = new TestQuestion();
-            $new_question->question = $block->question;
-            $new_question->task_id = $new_task->task_id;
-            $new_question->save();
+            foreach ($test_question_blocks as $key => $block) {
+                $new_question = new TestQuestion();
+                $new_question->question = $block->question;
+                $new_question->task_id = $new_task->task_id;
+                $new_question->save();
 
-            foreach ($block->answers as $key => $answer) {
-                $new_question_answer = new TestQuestionAnswer();
-                $new_question_answer->answer = $answer->answer_value;
-                $new_question_answer->question_id = $new_question->question_id;
-                if($answer->checked == true){
-                    $new_question_answer->is_correct = 1;
+                foreach ($block->answers as $key => $answer) {
+                    $new_question_answer = new TestQuestionAnswer();
+                    $new_question_answer->answer = $answer->answer_value;
+                    $new_question_answer->question_id = $new_question->question_id;
+                    if($answer->checked == true){
+                        $new_question_answer->is_correct = 1;
+                    }
+                    else{
+                        $new_question_answer->is_correct = 0;
+                    }
+
+                    $new_question_answer->save();
                 }
-                else{
-                  $new_question_answer->is_correct = 0;
-              }
-              $new_question_answer->save();
-          }
-      }
+            }
+        }
 
+        return $this->json('success', 'Task create success', 200, 'success');
 
-
-      return $this->json('success', 'Task create success', 200, 'success');
-
-  }
+    }
 
 
 }
