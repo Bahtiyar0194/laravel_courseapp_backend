@@ -59,6 +59,13 @@ class TaskController extends Controller{
                 $new_question->task_id = $new_task->task_id;
                 $new_question->save();
 
+                if(isset($block->question_materials)){
+                    if(count($block->question_materials) > 0){
+                        //App/Helpers
+                        create_test_question_blocks($new_question->question_id, $block->question_materials);
+                    }
+                }
+
                 foreach ($block->answers as $key => $answer) {
                     $new_question_answer = new TestQuestionAnswer();
                     $new_question_answer->answer = $answer->answer_value;
