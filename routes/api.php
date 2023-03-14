@@ -3,6 +3,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseCategoryController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\TaskController;
@@ -51,6 +52,15 @@ Route::group([
     ], function ($router) {
         Route::get('/get', [LanguageController::class, 'index']);
     });
+
+    Route::group([
+        'prefix' => 'users'
+    ], function ($router) {
+        Route::group(['middleware' => ['auth:sanctum']], function () {
+            Route::get('/get', [UserController::class, 'get_users']);
+        });
+    });
+
 
     Route::group([
         'prefix' => 'courses'
