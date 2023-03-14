@@ -228,4 +228,119 @@ if (!function_exists('create_test_question_blocks')){
 		}
 	}
 }
+
+if (!function_exists('get_test_question_materials')){
+	function get_test_question_materials($question_id){
+		$blocks = [];
+		$test_question_blocks = TestQuestionBlock::where('question_id', $question_id)->get();
+
+		foreach ($test_question_blocks as $key => $test_question_block) {
+
+			// if($test_question_block->test_question_block_type_id == 1){
+			// 	$text = LessonText::where('test_question_block_id', $test_question_block->test_question_block_id)
+			// 	->first();
+			// 	if(isset($text)){
+			// 		$text_block = [
+			// 			'block_id' => $key + 1,
+			// 			'block_type_id' => $test_question_block->test_question_block_type_id,
+			// 			'content' => $text->content
+			// 		];
+			// 		array_push($blocks, $text_block);
+			// 	}
+			// }
+			
+			// if($test_question_block->test_question_block_type_id == 2){
+			// 	$video = LessonVideo::leftJoin('media_files','test_question_videos.file_id','=','media_files.file_id')
+			// 	->where('test_question_videos.test_question_block_id', $test_question_block->test_question_block_id)
+			// 	->select(
+			// 		'media_files.file_type_id',
+			// 		'media_files.file_name',
+			// 		'media_files.file_id'
+			// 	)
+			// 	->first();
+			// 	if(isset($video)){
+			// 		$video_block = [
+			// 			'block_id' => $key + 1,
+			// 			'file_type_id' => $video->file_type_id,
+			// 			'file_id' => $video->file_id,
+			// 			'file_name' => $video->file_name
+			// 		];
+			// 		array_push($blocks, $video_block);
+			// 	}
+			// }
+			
+			if($test_question_block->test_question_block_type_id == 3){
+				$audio = TestQuestionAudio::leftJoin('media_files','test_question_audios.file_id','=','media_files.file_id')
+				->where('test_question_audios.test_question_block_id', $test_question_block->test_question_block_id)
+				->select(
+					'media_files.file_type_id',
+					'media_files.file_name',
+					'media_files.file_id'
+				)
+				->first();
+				if(isset($audio)){
+					$audio_block = [
+						'block_id' => $key + 1,
+						'file_type_id' => $audio->file_type_id,
+						'file_id' => $audio->file_id,
+						'file_name' => $audio->file_name,
+					];
+					array_push($blocks, $audio_block);
+				}
+			}
+			
+			if($test_question_block->test_question_block_type_id == 4){
+				$image = TestQuestionImage::leftJoin('media_files','test_question_images.file_id','=','media_files.file_id')
+				->where('test_question_images.test_question_block_id', $test_question_block->test_question_block_id)
+				->select(
+					'media_files.file_type_id',
+					'media_files.file_name',
+					'media_files.file_id',
+					'test_question_images.image_width'
+				)
+				->first();
+				if(isset($image)){
+					$image_block = [
+						'block_id' => $key + 1,
+						'file_type_id' => $image->file_type_id,
+						'file_id' => $image->file_id,
+						'file_name' => $image->file_name,
+						'image_width' => $image->image_width
+					];
+					array_push($blocks, $image_block);
+				}
+			}
+			
+			// if($test_question_block->test_question_block_type_id == 5){
+			// 	$table = LessonTable::where('test_question_block_id', $test_question_block->test_question_block_id)
+			// 	->first();
+			// 	if(isset($table)){
+			// 		$table_block = [
+			// 			'block_id' => $key + 1,
+			// 			'block_type_id' => $test_question_block->test_question_block_type_id,
+			// 			'content' => $table->content
+			// 		];
+			// 		array_push($blocks, $table_block);
+			// 	}
+			// }
+
+			if($test_question_block->test_question_block_type_id == 6){
+				$code = TestQuestionCode::where('test_question_block_id', $test_question_block->test_question_block_id)
+				->first();
+				if(isset($code)){
+					$code_block = [
+						'block_id' => $key + 1,
+						'block_type_id' => $test_question_block->test_question_block_type_id,
+						'code' => $code->code,
+						'code_language' => $code->code_language,
+						'code_theme' => $code->code_theme
+					];
+					array_push($blocks, $code_block);
+				}
+			}
+		}
+		
+		return $blocks;
+	}
+}
 ?>

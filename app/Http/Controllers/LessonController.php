@@ -67,7 +67,8 @@ class LessonController extends Controller{
                         array_push($blocks, $text_block);
                     }
                 }
-                elseif($lesson_block->lesson_block_type_id == 2){
+                
+                if($lesson_block->lesson_block_type_id == 2){
                     $video = LessonVideo::leftJoin('media_files','lesson_videos.file_id','=','media_files.file_id')
                     ->where('lesson_videos.lesson_block_id', $lesson_block->lesson_block_id)
                     ->select(
@@ -86,7 +87,8 @@ class LessonController extends Controller{
                         array_push($blocks, $video_block);
                     }
                 }
-                elseif($lesson_block->lesson_block_type_id == 3){
+                
+                if($lesson_block->lesson_block_type_id == 3){
                     $audio = LessonAudio::leftJoin('media_files','lesson_audios.file_id','=','media_files.file_id')
                     ->where('lesson_audios.lesson_block_id', $lesson_block->lesson_block_id)
                     ->select(
@@ -105,7 +107,8 @@ class LessonController extends Controller{
                         array_push($blocks, $audio_block);
                     }
                 }
-                elseif($lesson_block->lesson_block_type_id == 4){
+                
+                if($lesson_block->lesson_block_type_id == 4){
                     $image = LessonImage::leftJoin('media_files','lesson_images.file_id','=','media_files.file_id')
                     ->where('lesson_images.lesson_block_id', $lesson_block->lesson_block_id)
                     ->select(
@@ -126,6 +129,7 @@ class LessonController extends Controller{
                         array_push($blocks, $image_block);
                     }
                 }
+                
                 if($lesson_block->lesson_block_type_id == 5){
                     $table = LessonTable::where('lesson_block_id', $lesson_block->lesson_block_id)
                     ->first();
@@ -298,6 +302,15 @@ class LessonController extends Controller{
         }
     }
 
+
+    public function delete(Request $request){
+        $delete_lesson = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
+        ->where('courses.school_id', auth()->user()->school_id)
+        ->where('lessons.lesson_id', $request['lesson_id'])
+        ->delete();
+
+        return $this->json('success', 'Lesson delete successful', 200, $delete_lesson);
+    }
 
     public function set_order(Request $request){
         $array = explode(',', $request->lessons_id);
