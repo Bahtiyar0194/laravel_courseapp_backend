@@ -285,8 +285,7 @@ class LessonController extends Controller{
     }
 
 
-    public function edit(Request $request)
-    {
+    public function edit(Request $request){
         $validator = Validator::make($request->all(), [
             'lesson_name' => 'required|string|between:3, 300',
             'lesson_description' => 'required_unless:lesson_type_id,2|string|min:10',
