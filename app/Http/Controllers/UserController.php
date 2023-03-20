@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
+use Validator;
 
 class UserController extends Controller{
     use ApiResponser;
@@ -17,67 +18,57 @@ class UserController extends Controller{
      *
      * @return \Illuminate\Http\Response
      */
-    public function get_users()
-    {
+    public function get_users(){
         $users = User::where('school_id', '=', auth()->user()->school_id)
         ->get();
 
         return response()->json($users, 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+    public function get_user(Request $request){
+        $user = User::where('school_id', '=', auth()->user()->school_id)
+        ->where('user_id', '=', $request->user_id)
+        ->first();
+
+        return response()->json($user, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    public function update_user(Request $request){
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|between:2,100',
+            'last_name' => 'required|string|between:2,100',
+            'email' => 'required|string|email|max:100',
+            'phone' => 'required|regex:/^((?!_).)*$/s'
+        ]);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
+        if($validator->fails()){
+            return response()->json($validator->errors(), 422);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
+        $user = User::where('school_id', '=', auth()->user()->school_id)
+        ->where('user_id', '=', $request->user_id)
+        ->first();
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
+        if(isset($user)){
+            if($user->email != $request->email){
+                $find_email = User::where('school_id', '=', auth()->user()->school_id)
+                ->where('email', '=', $request->email)
+                ->first();
+
+                if(isset($find_email)){
+                    $email_error = ['email' => trans('auth.user_already_exists')];
+                    return response()->json($email_error, 422);
+                }
+            }
+        }
+
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->save();
+
+        return response()->json($user, 200);
     }
 
     /**

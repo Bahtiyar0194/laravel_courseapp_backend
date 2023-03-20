@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateLessonTasksTable extends Migration
+class CreateLessonsViewsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,12 @@ class CreateLessonTasksTable extends Migration
      */
     public function up()
     {
-        Schema::create('lesson_tasks', function (Blueprint $table) {
-            $table->increments('task_id');
-            $table->string('task_name');
-            $table->text('task_description')->nullable();
+        Schema::create('lessons_views', function (Blueprint $table) {
+            $table->increments('id');
             $table->integer('lesson_id')->unsigned();
             $table->foreign('lesson_id')->references('lesson_id')->on('lessons')->onDelete('cascade');
-            $table->integer('task_type_id')->unsigned();
-            $table->foreign('task_type_id')->references('task_type_id')->on('types_of_tasks');
+            $table->integer('viewer_id')->unsigned();
+            $table->foreign('viewer_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -32,6 +30,6 @@ class CreateLessonTasksTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('lesson_tasks');
+        Schema::dropIfExists('lessons_views');
     }
 }

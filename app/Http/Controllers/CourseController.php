@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\UserOperation;
+use App\Models\UserCourse;
+use App\Models\UserRole;
 use App\Models\Language;
 
 use App\Traits\ApiResponser;
@@ -20,7 +22,7 @@ class CourseController extends Controller{
         app()->setLocale($request->header('Accept-Language'));
     }
 
-    public function my_courses(Request $request){
+    public function get_courses(Request $request){
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
         $my_courses = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
@@ -37,6 +39,34 @@ class CourseController extends Controller{
             'course_categories_lang.course_category_name',
             'languages_lang.lang_name'
         )
+        ->where('courses.school_id', auth()->user()->school_id)
+        ->where('courses.show_status_id', 1)
+        ->where('languages_lang.lang_tag', $language->lang_tag)
+        ->where('course_categories_lang.lang_id', $language->lang_id)
+        ->get();
+
+        return response()->json($my_courses, 200);
+    }
+
+    public function my_courses(Request $request){
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+
+        $my_courses = Course::leftJoin('users_courses','courses.course_id','=','users_courses.course_id')
+        ->leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
+        ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
+        ->leftJoin('languages','courses.course_lang_id','=','languages.lang_id')
+        ->leftJoin('languages_lang','languages.lang_id','=','languages_lang.lang_id')
+        ->select(
+            'courses.course_id',
+            'courses.course_name',
+            'courses.course_description',
+            'courses.course_poster_file',
+            'courses.course_cost',
+            'courses.created_at',
+            'course_categories_lang.course_category_name',
+            'languages_lang.lang_name'
+        )
+        ->where('users_courses.recipient_id', auth()->user()->user_id)
         ->where('courses.school_id', auth()->user()->school_id)
         ->where('courses.show_status_id', 1)
         ->where('languages_lang.lang_tag', $language->lang_tag)
@@ -65,16 +95,31 @@ class CourseController extends Controller{
             'languages_lang.lang_name'
         )
         ->where('courses.school_id', auth()->user()->school_id)
-        ->where('courses.course_id', $request['course_id'])
+        ->where('courses.course_id', $request->course_id)
         ->where('languages_lang.lang_tag', $language->lang_tag)
         ->where('course_categories_lang.lang_id', $language->lang_id)
         ->first();
 
         if(isset($course)){
+            $subscribed = UserCourse::where('recipient_id', '=', auth()->user()->user_id)
+            ->where('course_id', '=', $request->course_id)
+            ->first();
+
+            $is_admin = UserRole::where('user_id', '=', auth()->user()->user_id)
+            ->where('role_type_id', '=', 2)
+            ->first();
+
+            if(isset($subscribed) || isset($is_admin)){
+                $course->subscribed = true;
+            }
+            else{
+                $course->subscribed = false;
+            }
+            
             return response()->json($course, 200);
         }
         else{
-            return response()->json('Not found', 404);
+            return response()->json('Course not found', 404);
         }
     }
 
@@ -130,11 +175,38 @@ class CourseController extends Controller{
     }
 
 
+    public function free_subscribe(Request $request){
+        $find_course = Course::where('course_id', '=', $request->course_id)
+        ->where('school_id', '=', auth()->user()->school_id)
+        ->first();
+
+        if(isset($find_course)){
+            if($find_course->course_cost == 0){
+                $new_user_course = new UserCourse();
+                $new_user_course->operator_id = auth()->user()->user_id;
+                $new_user_course->recipient_id = auth()->user()->user_id;
+                $new_user_course->course_id = $request->course_id;
+                $new_user_course->cost = $find_course->course_cost;
+                $new_user_course->subscribe_type_id = 1;
+                $new_user_course->save();
+
+                return response()->json('Subscribe success', 200);
+            }
+            else{
+                return response()->json('Access denied', 403);
+            }
+        }
+        else{
+            return response()->json('Course not found', 404);
+        }
+    }
+
+
     public function poster($file_name){
         $path = storage_path('/app/images/'.$file_name);
 
         if (!File::exists($path)) {
-            return response()->json('Not found', 404);
+            return response()->json('Poster not found', 404);
         }
 
         $file = File::get($path);

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\School;
 use App\Models\Lesson;
+use App\Models\LessonView;
+use App\Models\LessonTask;
 use App\Models\LessonBlock;
 use App\Models\LessonText;
 use App\Models\LessonTable;
@@ -11,6 +13,8 @@ use App\Models\LessonCode;
 use App\Models\LessonImage;
 use App\Models\LessonVideo;
 use App\Models\LessonAudio;
+use App\Models\UserCourse;
+use App\Models\UserRole;
 use App\Models\UserOperation;
 use App\Models\MediaFile;
 
@@ -21,6 +25,7 @@ use File;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Validator;
+use DB;
 
 class LessonController extends Controller{
     use ApiResponser;
@@ -45,11 +50,29 @@ class LessonController extends Controller{
             'courses.course_name'
         )
         ->where('courses.school_id', auth()->user()->school_id)
-        ->where('lessons.lesson_id', $request['lesson_id'])
+        ->where('lessons.lesson_id', $request->lesson_id)
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->first();
 
         if(isset($find_lesson)){
+
+            if(isset($find_lesson->course_id)){
+                $subscribed = UserCourse::where('recipient_id', '=', auth()->user()->user_id)
+                ->where('course_id', '=', $find_lesson->course_id)
+                ->first();
+
+                $is_admin = UserRole::where('user_id', '=', auth()->user()->user_id)
+                ->where('role_type_id', '=', 2)
+                ->first();
+
+                if(isset($subscribed) || isset($is_admin)){
+                    $find_lesson->subscribed = true;
+                }
+                else{
+                    $find_lesson->subscribed = false;
+                }
+            }
+
             $blocks = [];
             $lesson_blocks = LessonBlock::where('lesson_id', $find_lesson->lesson_id)->get();
 
@@ -129,7 +152,7 @@ class LessonController extends Controller{
                         array_push($blocks, $image_block);
                     }
                 }
-                
+
                 if($lesson_block->lesson_block_type_id == 5){
                     $table = LessonTable::where('lesson_block_id', $lesson_block->lesson_block_id)
                     ->first();
@@ -164,6 +187,11 @@ class LessonController extends Controller{
                 'lesson_blocks' => $blocks
             ];
 
+            $new_lesson_view = new LessonView();
+            $new_lesson_view->lesson_id = $request->lesson_id;
+            $new_lesson_view->viewer_id = auth()->user()->user_id;
+            $new_lesson_view->save();
+
             return response()->json($lesson, 200);
         }
         else{
@@ -173,20 +201,15 @@ class LessonController extends Controller{
 
     public function my_lessons(Request $request){
         $my_lessons = Lesson::leftJoin('courses','lessons.course_id','=','courses.course_id')
-        ->leftJoin('types_of_lessons','lessons.lesson_type_id','=','types_of_lessons.lesson_type_id')
-        ->leftJoin('types_of_lessons_lang','types_of_lessons.lesson_type_id','=','types_of_lessons_lang.lesson_type_id')
-        ->leftJoin('languages','types_of_lessons_lang.lang_id','=','languages.lang_id')
         ->select(
             'lessons.lesson_id',
             'lessons.lesson_name',
             'lessons.lesson_description',
             'lessons.created_at',
             'lessons.lesson_type_id',
-            'types_of_lessons_lang.lesson_type_name'
         )
         ->where('courses.school_id', auth()->user()->school_id)
         ->where('lessons.course_id', $request['course_id'])
-        ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->orderBy('lessons.sort_num', 'asc')
         ->get();
 
@@ -195,8 +218,14 @@ class LessonController extends Controller{
         $total_count = 0;
 
         foreach ($my_lessons as $key => $value) {
-            if($value->lesson_type_id != 3){
+            if($value->lesson_type_id != 2){
                 $materials_count += 1;
+
+                $views_count = count(LessonView::where('lesson_id', '=', $value->lesson_id)->get());
+                $my_lessons[$key]->views_count = $views_count;
+
+                $tasks_count = count(LessonTask::where('lesson_id', '=', $value->lesson_id)->get());
+                $my_lessons[$key]->tasks_count = $tasks_count;
             }
             else{
                 $sections_count += 1;

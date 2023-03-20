@@ -27,7 +27,7 @@ class AuthController extends Controller
             'first_name' => 'required|string|between:2,100',
             'last_name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100',
-            'phone' => 'required|numeric',
+            'phone' => 'required|regex:/^((?!_).)*$/s',
             'first_registration' => 'required',
             'school_name' => 'nullable|required_if:first_registration,true|string|between:2,100',
             'school_domain' => 'nullable|required_if:first_registration,true|string|between:2,20|regex:/(([a-z]+)(\d+)?$)/u|unique:schools',
