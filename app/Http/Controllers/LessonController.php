@@ -182,6 +182,27 @@ class LessonController extends Controller{
                 }
             }
 
+            $lessons = Lesson::where('course_id', '=', $find_lesson->course_id)
+            ->where('lesson_type_id', '=', 1)
+            ->orderBy('sort_num', 'asc')
+            ->get();
+
+            foreach ($lessons as $key => $value) {
+                if($value->lesson_id == $find_lesson->lesson_id){
+                    $current_lesson_key = $key;
+                }
+            }
+
+            if($current_lesson_key > 0){
+                $previous_lesson = $lessons[$current_lesson_key - 1];
+                $find_lesson->previous_lesson = $previous_lesson;
+            }
+
+            if(($current_lesson_key + 1) < count($lessons)){
+                $next_lesson = $lessons[$current_lesson_key + 1];
+                $find_lesson->next_lesson = $next_lesson;
+            }
+
             $lesson = [
                 'lesson' => $find_lesson,
                 'lesson_blocks' => $blocks
