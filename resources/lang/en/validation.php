@@ -144,6 +144,9 @@ return [
         'image_file' => [
             'required' => 'Please, attach an image file',
         ],
+        'roles_count' => [
+            'min' => 'The number of user roles must be at least :min',
+        ]
     ],
 
     /*

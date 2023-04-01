@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 use App\Models\User;
+use App\Models\UserRole;
+use App\Models\Language;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
 use Validator;
+use DB;
 
 class UserController extends Controller{
     use ApiResponser;
@@ -30,6 +33,33 @@ class UserController extends Controller{
         ->where('user_id', '=', $request->user_id)
         ->first();
 
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+
+        $roles = DB::table('types_of_user_roles')
+        ->leftJoin('types_of_user_roles_lang','types_of_user_roles.role_type_id','=','types_of_user_roles_lang.role_type_id')
+        ->where('types_of_user_roles_lang.lang_id', $language->lang_id)
+        ->where('types_of_user_roles.role_type_id', '!=', 1)
+        ->select(
+            'types_of_user_roles.role_type_id',
+            'types_of_user_roles_lang.user_role_type_name'
+        )
+        ->get();
+
+        foreach ($roles as $key => $role) {
+            $find_user_role = UserRole::where('role_type_id', '=', $role->role_type_id)
+            ->where('user_id', '=', $user->user_id)
+            ->first();
+
+            if(isset($find_user_role)){
+                $roles[$key]->selected = true;
+            }
+            else{
+                $roles[$key]->selected = false;
+            }
+        }
+
+        $user->roles = $roles;
+
         return response()->json($user, 200);
     }
 
@@ -38,7 +68,9 @@ class UserController extends Controller{
             'first_name' => 'required|string|between:2,100',
             'last_name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100',
-            'phone' => 'required|regex:/^((?!_).)*$/s'
+            'phone' => 'required|regex:/^((?!_).)*$/s',
+            'roles_count' => 'required|numeric|min:1',
+            'roles' => 'required|array'
         ]);
 
         if($validator->fails()){
@@ -66,7 +98,20 @@ class UserController extends Controller{
         $user->last_name = $request->last_name;
         $user->email = $request->email;
         $user->phone = $request->phone;
+        $user->current_role_id = $request->roles[0];
         $user->save();
+
+        UserRole::where('user_id', $user->user_id)
+        ->delete();
+
+        foreach ($request->roles as $key => $value) {
+            if($value != 1){
+                $user_role = new UserRole();
+                $user_role->user_id = $user->user_id;
+                $user_role->role_type_id = $value;
+                $user_role->save();
+            }
+        }
 
         return response()->json($user, 200);
     }

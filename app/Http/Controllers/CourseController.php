@@ -52,10 +52,10 @@ class CourseController extends Controller{
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
         $my_courses = Course::leftJoin('users_courses','courses.course_id','=','users_courses.course_id')
-        ->leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
-        ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
-        ->leftJoin('languages','courses.course_lang_id','=','languages.lang_id')
-        ->leftJoin('languages_lang','languages.lang_id','=','languages_lang.lang_id')
+        ->leftJoin('course_categories', 'courses.course_category_id', '=', 'course_categories.course_category_id')
+        ->leftJoin('course_categories_lang', 'course_categories.course_category_id', '=', 'course_categories_lang.course_category_id')
+        ->leftJoin('languages', 'courses.course_lang_id', '=', 'languages.lang_id')
+        ->leftJoin('languages_lang', 'languages.lang_id', '=', 'languages_lang.lang_id')
         ->select(
             'courses.course_id',
             'courses.course_name',
@@ -115,7 +115,7 @@ class CourseController extends Controller{
             else{
                 $course->subscribed = false;
             }
-            
+
             return response()->json($course, 200);
         }
         else{

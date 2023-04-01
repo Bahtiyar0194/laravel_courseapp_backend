@@ -22,6 +22,8 @@ class CreateUsersTable extends Migration
             $table->float('wallet')->default(0);
             $table->integer('school_id')->unsigned();
             $table->foreign('school_id')->references('school_id')->on('schools')->onDelete('cascade');
+            $table->integer('current_role_id')->unsigned();
+            $table->foreign('current_role_id')->references('role_type_id')->on('types_of_user_roles');
             $table->integer('ban_status_id')->default(1)->unsigned();
             $table->foreign('ban_status_id')->references('ban_status_id')->on('ban_status');
             $table->string('password');

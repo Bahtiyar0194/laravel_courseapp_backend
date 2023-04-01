@@ -37,6 +37,7 @@ Route::group([
 
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/me', [AuthController::class, 'me']);
+            Route::post('/change_mode/{role_type_id}', [AuthController::class, 'change_mode']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
     });
