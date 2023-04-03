@@ -69,14 +69,25 @@ class TaskController extends Controller{
     }
 
     public function create(Request $request){
-        $validator = Validator::make($request->all(), [
-            'task_name' => 'required|string|between:3, 300',
-            'task_description' => 'required|string|max:1000',
-            'task_type_id' => 'required',
-            'test_question_blocks' => 'required_unless:task_type_id,1|min:3',
-            'test_question_blocks_error' => 'required|declined',
-            'operation_type_id' => 'required'
-        ]);
+
+        if($request->task_type_id == 1){
+            $validator = Validator::make($request->all(), [
+                'task_name' => 'required|string|between:3, 300',
+                'task_description' => 'required|string|max:1000',
+                'task_type_id' => 'required',
+                'test_question_blocks' => 'required|min:3',
+                'test_question_blocks_error' => 'required|declined',
+                'operation_type_id' => 'required'
+            ]);
+        }
+        elseif($request->task_type_id == 2){
+            $validator = Validator::make($request->all(), [
+                'task_name' => 'required|string|between:3, 300',
+                'task_description' => 'required|string|max:1000',
+                'task_type_id' => 'required',
+                'operation_type_id' => 'required'
+            ]);
+        }
 
         if($validator->fails()){
             return $this->json('error', 'Task create error', 422, $validator->errors());
@@ -171,6 +182,7 @@ class TaskController extends Controller{
             ->leftJoin('test_question_answers', 'test_question_user_answers.answer_id', '=', 'test_question_answers.answer_id')
             ->leftJoin('test_questions', 'test_question_answers.question_id', '=', 'test_questions.question_id')
             ->where('user_id', '=', auth()->user()->user_id)
+            ->where('test_questions.task_id', '=', $request->task_id)
             ->get();
 
             $progress = (count($answered_questions) * 100) / count($all_questions);
