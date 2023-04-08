@@ -13,9 +13,9 @@ class BanStatusTable extends Migration
      */
     public function up()
     {
-        Schema::create('ban_status', function (Blueprint $table) {
-            $table->increments('ban_status_id');
-            $table->string('ban_status_slug');
+        Schema::create('user_status', function (Blueprint $table) {
+            $table->increments('user_status_id');
+            $table->string('user_status_slug');
             $table->timestamps();
         });
     }

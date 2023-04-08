@@ -7,16 +7,11 @@ use App\Models\Lesson;
 use App\Models\LessonView;
 use App\Models\LessonTask;
 use App\Models\LessonBlock;
-use App\Models\LessonText;
-use App\Models\LessonTable;
-use App\Models\LessonCode;
-use App\Models\LessonImage;
-use App\Models\LessonVideo;
-use App\Models\LessonAudio;
 use App\Models\UserCourse;
 use App\Models\UserRole;
 use App\Models\UserOperation;
 use App\Models\MediaFile;
+use App\Models\UploadConfiguration;
 
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
@@ -26,6 +21,7 @@ use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Validator;
 use DB;
+use Iman\Streamer\VideoStreamer;
 
 class LessonController extends Controller{
     use ApiResponser;
@@ -73,114 +69,8 @@ class LessonController extends Controller{
                 }
             }
 
-            $blocks = [];
-            $lesson_blocks = LessonBlock::where('lesson_id', $find_lesson->lesson_id)->get();
-
-            foreach ($lesson_blocks as $key => $lesson_block) {
-
-                if($lesson_block->lesson_block_type_id == 1){
-                    $text = LessonText::where('lesson_block_id', $lesson_block->lesson_block_id)
-                    ->first();
-                    if(isset($text)){
-                        $text_block = [
-                            'block_id' => $key + 1,
-                            'block_type_id' => $lesson_block->lesson_block_type_id,
-                            'content' => $text->content
-                        ];
-                        array_push($blocks, $text_block);
-                    }
-                }
-                
-                if($lesson_block->lesson_block_type_id == 2){
-                    $video = LessonVideo::leftJoin('media_files','lesson_videos.file_id','=','media_files.file_id')
-                    ->where('lesson_videos.lesson_block_id', $lesson_block->lesson_block_id)
-                    ->select(
-                        'media_files.file_type_id',
-                        'media_files.file_name',
-                        'media_files.file_id'
-                    )
-                    ->first();
-                    if(isset($video)){
-                        $video_block = [
-                            'block_id' => $key + 1,
-                            'file_type_id' => $video->file_type_id,
-                            'file_id' => $video->file_id,
-                            'file_name' => $video->file_name
-                        ];
-                        array_push($blocks, $video_block);
-                    }
-                }
-                
-                if($lesson_block->lesson_block_type_id == 3){
-                    $audio = LessonAudio::leftJoin('media_files','lesson_audios.file_id','=','media_files.file_id')
-                    ->where('lesson_audios.lesson_block_id', $lesson_block->lesson_block_id)
-                    ->select(
-                        'media_files.file_type_id',
-                        'media_files.file_name',
-                        'media_files.file_id'
-                    )
-                    ->first();
-                    if(isset($audio)){
-                        $audio_block = [
-                            'block_id' => $key + 1,
-                            'file_type_id' => $audio->file_type_id,
-                            'file_id' => $audio->file_id,
-                            'file_name' => $audio->file_name,
-                        ];
-                        array_push($blocks, $audio_block);
-                    }
-                }
-                
-                if($lesson_block->lesson_block_type_id == 4){
-                    $image = LessonImage::leftJoin('media_files','lesson_images.file_id','=','media_files.file_id')
-                    ->where('lesson_images.lesson_block_id', $lesson_block->lesson_block_id)
-                    ->select(
-                        'media_files.file_type_id',
-                        'media_files.file_name',
-                        'media_files.file_id',
-                        'lesson_images.image_width'
-                    )
-                    ->first();
-                    if(isset($image)){
-                        $image_block = [
-                            'block_id' => $key + 1,
-                            'file_type_id' => $image->file_type_id,
-                            'file_id' => $image->file_id,
-                            'file_name' => $image->file_name,
-                            'image_width' => $image->image_width
-                        ];
-                        array_push($blocks, $image_block);
-                    }
-                }
-
-                if($lesson_block->lesson_block_type_id == 5){
-                    $table = LessonTable::where('lesson_block_id', $lesson_block->lesson_block_id)
-                    ->first();
-                    if(isset($table)){
-                        $table_block = [
-                            'block_id' => $key + 1,
-                            'block_type_id' => $lesson_block->lesson_block_type_id,
-                            'content' => $table->content
-                        ];
-                        array_push($blocks, $table_block);
-                    }
-                }
-
-                if($lesson_block->lesson_block_type_id == 6){
-                    $code = LessonCode::where('lesson_block_id', $lesson_block->lesson_block_id)
-                    ->first();
-                    if(isset($code)){
-                        $code_block = [
-                            'block_id' => $key + 1,
-                            'block_type_id' => $lesson_block->lesson_block_type_id,
-                            'code' => $code->code,
-                            'code_language' => $code->code_language,
-                            'code_theme' => $code->code_theme
-                        ];
-                        array_push($blocks, $code_block);
-                    }
-                }
-            }
+            //App/Helpers
+            $lesson_blocks = get_blocks($find_lesson->lesson_id, 'lesson');
 
             $lessons = Lesson::where('course_id', '=', $find_lesson->course_id)
             ->where('lesson_type_id', '=', 1)
@@ -205,7 +95,7 @@ class LessonController extends Controller{
 
             $lesson = [
                 'lesson' => $find_lesson,
-                'lesson_blocks' => $blocks
+                'lesson_blocks' => $lesson_blocks
             ];
 
             $new_lesson_view = new LessonView();
@@ -294,7 +184,7 @@ class LessonController extends Controller{
 
         if($request->lesson_type_id != 2){
             //App/Helpers
-            create_lesson_blocks($new_lesson->lesson_id, json_decode($request->lesson_blocks));
+            create_blocks($new_lesson->lesson_id, json_decode($request->lesson_blocks), 'lesson');
 
             $user_operation = new UserOperation();
             $user_operation->operator_id = auth()->user()->user_id;
@@ -334,7 +224,7 @@ class LessonController extends Controller{
                 ->delete();
 
                 //App/Helpers
-                create_lesson_blocks($find_lesson->lesson_id, json_decode($request->lesson_blocks));
+                create_blocks($find_lesson->lesson_id, json_decode($request->lesson_blocks), 'lesson');
 
                 $user_operation = new UserOperation();
                 $user_operation->operator_id = auth()->user()->user_id;
@@ -375,7 +265,10 @@ class LessonController extends Controller{
 
 
     public function upload_image(Request $request){
-        $max_image_file_size = 1;
+        $file_type_id = 4;
+        $max_image_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
+        ->first()->max_file_size_mb;
+
         $school_id = auth()->user()->school_id;
 
         $validator = Validator::make($request->all(), [
@@ -394,7 +287,7 @@ class LessonController extends Controller{
         $file_target = $file->hashName();
 
         $media_file->file_target = $file_target;
-        $media_file->file_type_id = 4;
+        $media_file->file_type_id = $file_type_id;
         $media_file->size = $file->getSize() / 1048576;
 
         $file->storeAs('/images/', $file_target);
@@ -435,7 +328,10 @@ class LessonController extends Controller{
     }
 
     public function upload_video(Request $request){
-        $max_video_file_size = 100;
+        $file_type_id = 1;
+        $max_video_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
+        ->first()->max_file_size_mb;
+
         $school_id = auth()->user()->school_id;
 
         $validator = Validator::make($request->all(), [
@@ -461,7 +357,7 @@ class LessonController extends Controller{
                 $file_target = $file->hashName();
 
                 $media_file->file_target = $file_target;
-                $media_file->file_type_id = 1;
+                $media_file->file_type_id = $file_type_id;
                 $media_file->size = $file->getSize() / 1048576;
 
                 $file->storeAs('/videos/schools/'.$school_id, $file_target);  
@@ -510,12 +406,8 @@ class LessonController extends Controller{
                             if (!File::exists($path)) {
                                 return response()->json('Video not found', 404);
                             }
-
-                            $file = File::get($path);
-                            $type = File::mimeType($path);
-
-                            $response = Response::make($file, 200);
-                            $response->header("Content-Type", $type);
+                            
+                            $response = VideoStreamer::streamFile($path);
                         }
                         elseif($video_file->file_type_id == 2){
                             $response = $video_file->file_target;
@@ -541,7 +433,10 @@ class LessonController extends Controller{
 
 
     public function upload_audio(Request $request){
-        $max_audio_file_size = 10;
+        $file_type_id = 3;
+        $max_audio_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
+        ->first()->max_file_size_mb;
+
         $school_id = auth()->user()->school_id;
 
         $validator = Validator::make($request->all(), [
@@ -564,7 +459,7 @@ class LessonController extends Controller{
             $file_target = $file->hashName();
 
             $media_file->file_target = $file_target;
-            $media_file->file_type_id = 3;
+            $media_file->file_type_id = $file_type_id;
             $media_file->size = $file->getSize() / 1048576;
 
             $file->storeAs('/audios/schools/'.$school_id, $file_target);  

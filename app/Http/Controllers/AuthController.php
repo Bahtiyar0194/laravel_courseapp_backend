@@ -159,7 +159,7 @@ class AuthController extends Controller
         return $this->json('error', 'Login error', 401, ['auth_failed' => trans('auth.failed')]);
     }
 
-    if(auth()->user()->ban_status_id == 2){
+    if(auth()->user()->user_status_id == 2){
         return $this->json('error', 'Login error', 401, ['auth_failed' => trans('auth.banned')]);
     }
 

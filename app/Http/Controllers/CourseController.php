@@ -105,16 +105,32 @@ class CourseController extends Controller{
             ->where('course_id', '=', $request->course_id)
             ->first();
 
-            $is_admin = UserRole::where('user_id', '=', auth()->user()->user_id)
-            ->where('role_type_id', '=', 2)
-            ->first();
-
-            if(isset($subscribed) || isset($is_admin)){
+            if(isset($subscribed)){
                 $course->subscribed = true;
             }
             else{
                 $course->subscribed = false;
             }
+
+            $subscribers = UserCourse::leftJoin('users as operator','users_courses.operator_id','=','operator.user_id')
+            ->leftJoin('users as recipient','users_courses.recipient_id','=','recipient.user_id')
+            ->leftJoin('types_of_course_subscribes','users_courses.subscribe_type_id','=','types_of_course_subscribes.subscribe_type_id')
+            ->leftJoin('types_of_course_subscribes_lang','types_of_course_subscribes.subscribe_type_id','=','types_of_course_subscribes_lang.subscribe_type_id')
+            ->select(
+                'operator.first_name as operator_first_name',
+                'operator.last_name as operator_last_name',
+                'recipient.first_name as recipient_first_name',
+                'recipient.last_name as recipient_last_name',
+                'users_courses.id',
+                'users_courses.cost',
+                'users_courses.created_at',
+                'types_of_course_subscribes_lang.subscribe_type_name'
+            )
+            ->where('users_courses.course_id', '=', $request->course_id)
+            ->where('types_of_course_subscribes_lang.lang_id', $language->lang_id)
+            ->get();
+
+            $course->subscribers = $subscribers;
 
             return response()->json($course, 200);
         }
@@ -170,6 +186,14 @@ class CourseController extends Controller{
         $user_operation->operator_id = auth()->user()->user_id;
         $user_operation->operation_type_id = 3;
         $user_operation->save();
+
+        $new_user_course = new UserCourse();
+        $new_user_course->operator_id = auth()->user()->user_id;
+        $new_user_course->recipient_id = auth()->user()->user_id;
+        $new_user_course->course_id = $new_course->course_id;
+        $new_user_course->cost = 0;
+        $new_user_course->subscribe_type_id = 4;
+        $new_user_course->save();
 
         return $this->json('success', 'Course create successful', 200, $new_course);
     }

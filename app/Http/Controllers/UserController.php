@@ -21,9 +21,23 @@ class UserController extends Controller{
      *
      * @return \Illuminate\Http\Response
      */
-    public function get_users(){
-        $users = User::where('school_id', '=', auth()->user()->school_id)
-        ->get();
+    public function get_users(Request $request){
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+
+        $users = User::leftJoin('user_status','users.user_status_id','=','user_status.user_status_id')
+        ->leftJoin('user_status_lang','user_status.user_status_id','=','user_status_lang.user_status_id')
+        ->select(
+            'users.user_id',
+            'users.first_name',
+            'users.last_name',
+            'users.email',
+            'users.phone',
+            'users.created_at',
+            'user_status_lang.user_status_name'
+        )
+        ->where('users.school_id', '=', auth()->user()->school_id)
+        ->where('user_status_lang.lang_id', $language->lang_id)
+        ->paginate(1);
 
         return response()->json($users, 200);
     }

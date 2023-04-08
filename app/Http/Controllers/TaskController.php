@@ -9,6 +9,14 @@ use App\Models\TestQuestionAnswer;
 use App\Models\TestQuestionUserAnswer;
 use Illuminate\Http\Request;
 
+use App\Models\TaskBlock;
+use App\Models\TaskText;
+use App\Models\TaskTable;
+use App\Models\TaskCode;
+use App\Models\TaskImage;
+use App\Models\TaskVideo;
+use App\Models\TaskAudio;
+
 use App\Traits\ApiResponser;
 use App\Http\Controllers\Controller;
 use Validator;
@@ -27,6 +35,7 @@ class TaskController extends Controller{
             'lesson_tasks.task_id',
             'lesson_tasks.task_name',
             'lesson_tasks.task_description',
+            'lesson_tasks.task_type_id',
             'lessons.lesson_id',
             'lessons.lesson_name',
             'courses.course_id',
@@ -37,6 +46,12 @@ class TaskController extends Controller{
         ->first();
 
         if(isset($find_task)){
+
+            if($find_task->task_type_id != 1){
+                //App/Helpers
+                $find_task->task_blocks = get_blocks($find_task->task_id, 'task');
+            }
+
             return response()->json($find_task, 200);
         }
         else{
@@ -130,6 +145,10 @@ class TaskController extends Controller{
                     $new_question_answer->save();
                 }
             }
+        }
+        elseif($request->task_type_id == 2){
+            //App/Helpers
+            create_blocks($new_task->task_id, json_decode($request->task_blocks), 'task');
         }
 
         $user_operation = new UserOperation();

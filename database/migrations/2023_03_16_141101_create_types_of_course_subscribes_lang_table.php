@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class BanStatusLangTable extends Migration
+class CreateTypesOfCourseSubscribesLangTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,11 @@ class BanStatusLangTable extends Migration
      */
     public function up()
     {
-        Schema::create('ban_status_lang', function (Blueprint $table) {
+        Schema::create('types_of_course_subscribes_lang', function (Blueprint $table) {
           $table->increments('id');
-          $table->string('ban_status_name');
-          $table->integer('ban_status_id')->unsigned();
-          $table->foreign('ban_status_id')->references('ban_status_id')->on('ban_status');
+          $table->string('subscribe_type_name');
+          $table->integer('subscribe_type_id')->unsigned();
+          $table->foreign('subscribe_type_id')->references('subscribe_type_id')->on('types_of_course_subscribes');
           $table->integer('lang_id')->unsigned();
           $table->foreign('lang_id')->references('lang_id')->on('languages');
           $table->timestamps();
@@ -31,6 +31,6 @@ class BanStatusLangTable extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('types_of_course_subscribes_lang');
     }
 }
