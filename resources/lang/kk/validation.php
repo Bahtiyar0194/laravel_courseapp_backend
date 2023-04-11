@@ -163,11 +163,11 @@ return [
     */
 
     'attributes' => [
-        'name'                  => 'Атыңыз',
-        'username'              => 'Тегіңіз',
+        'name'                  => 'Аты',
+        'username'              => 'Тегі',
         'email'                 => 'E-Mail пошта',
-        'first_name'            => 'Атыңыз',
-        'last_name'             => 'Тегіңіз',
+        'first_name'            => 'Аты',
+        'last_name'             => 'Тегі',
         'password'              => 'Құпия сөз',
         'password_confirmation' => 'Құпия сөзді растау',
 

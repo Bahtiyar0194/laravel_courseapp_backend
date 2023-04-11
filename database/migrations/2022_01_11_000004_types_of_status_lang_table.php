@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class BanStatusLangTable extends Migration
+class TypesOfStatusLangTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,11 @@ class BanStatusLangTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_status_lang', function (Blueprint $table) {
+        Schema::create('types_of_status_lang', function (Blueprint $table) {
           $table->increments('id');
-          $table->string('user_status_name');
-          $table->integer('user_status_id')->unsigned();
-          $table->foreign('user_status_id')->references('user_status_id')->on('user_status');
+          $table->string('status_type_name');
+          $table->integer('status_type_id')->unsigned();
+          $table->foreign('status_type_id')->references('status_type_id')->on('types_of_status');
           $table->integer('lang_id')->unsigned();
           $table->foreign('lang_id')->references('lang_id')->on('languages');
           $table->timestamps();

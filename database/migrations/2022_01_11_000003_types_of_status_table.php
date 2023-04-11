@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class BanStatusTable extends Migration
+class TypesOfStatusTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,9 @@ class BanStatusTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_status', function (Blueprint $table) {
-            $table->increments('user_status_id');
-            $table->string('user_status_slug');
+        Schema::create('types_of_status', function (Blueprint $table) {
+            $table->increments('status_type_id');
+            $table->string('status_type_slug');
             $table->timestamps();
         });
     }

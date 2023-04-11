@@ -88,7 +88,6 @@ class AuthController extends Controller
         $user->save();
 
         if($request->first_registration == 'true'){
-
             $user_role = new UserRole();
             $user_role->user_id = $user->user_id;
             $user_role->role_type_id = 2;
@@ -110,21 +109,21 @@ class AuthController extends Controller
             $user_operation->save();
         }
         elseif($request->first_registration == 'false'){
-           $user_role = new UserRole();
-           $user_role->user_id = $user->user_id;
-           $user_role->role_type_id = 4;
-           $user_role->save();
-       }
+         $user_role = new UserRole();
+         $user_role->user_id = $user->user_id;
+         $user_role->role_type_id = 4;
+         $user_role->save();
+     }
 
-       $user_operation = new UserOperation();
-       $user_operation->operator_id = $user->user_id;
-       $user_operation->operation_type_id = 1;
-       $user_operation->save();
+     $user_operation = new UserOperation();
+     $user_operation->operator_id = $user->user_id;
+     $user_operation->operation_type_id = 1;
+     $user_operation->save();
 
-       return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
-   }
+     return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
+ }
 
-   public function login(Request $request){
+ public function login(Request $request){
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
         'password' => 'required',
@@ -169,6 +168,11 @@ class AuthController extends Controller
 public function me(Request $request){
     $user = auth()->user();
 
+    $change_user_activity = User::find($user->user_id);
+    $change_user_activity->last_activity = date('Y-m-d H:i:s');
+    $change_user_activity->ip_address = $request->ip();
+    $change_user_activity->save();
+
     $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
     $roles = UserRole::leftJoin('types_of_user_roles', 'users_roles.role_type_id', '=', 'types_of_user_roles.role_type_id')
@@ -190,13 +194,13 @@ public function me(Request $request){
 }
 
 public function change_mode(Request $request){
-   $user = auth()->user();
-   $role_found = false;
+ $user = auth()->user();
+ $role_found = false;
 
-   $roles = UserRole::where('user_id', $user->user_id)
-   ->select('role_type_id')->get();
+ $roles = UserRole::where('user_id', $user->user_id)
+ ->select('role_type_id')->get();
 
-   foreach ($roles as $key => $value) {
+ foreach ($roles as $key => $value) {
     if($value->role_type_id == $request->role_type_id){
         $role_found = true;
         break;
@@ -211,7 +215,7 @@ if($role_found === true){
     return response()->json('User mode change successful', 200);
 }
 else{
-   return response()->json('Access denied', 403);
+ return response()->json('Access denied', 403);
 }
 }
 

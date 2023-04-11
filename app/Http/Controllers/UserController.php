@@ -6,6 +6,7 @@ use App\Models\UserRole;
 use App\Models\Language;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
+use Str;
 use Validator;
 use DB;
 
@@ -16,16 +17,27 @@ class UserController extends Controller{
         app()->setLocale($request->header('Accept-Language'));
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function get_roles(Request $request){
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+
+        $roles = DB::table('types_of_user_roles')
+        ->leftJoin('types_of_user_roles_lang','types_of_user_roles.role_type_id','=','types_of_user_roles_lang.role_type_id')
+        ->where('types_of_user_roles_lang.lang_id', $language->lang_id)
+        ->where('types_of_user_roles.role_type_id', '!=', 1)
+        ->select(
+            'types_of_user_roles.role_type_id',
+            'types_of_user_roles_lang.user_role_type_name'
+        )
+        ->get();
+
+        return response()->json($roles, 200);
+    }
+
     public function get_users(Request $request){
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
-        $users = User::leftJoin('user_status','users.user_status_id','=','user_status.user_status_id')
-        ->leftJoin('user_status_lang','user_status.user_status_id','=','user_status_lang.user_status_id')
+        $users = User::leftJoin('types_of_status','users.status_type_id','=','types_of_status.status_type_id')
+        ->leftJoin('types_of_status_lang','types_of_status.status_type_id','=','types_of_status_lang.status_type_id')
         ->select(
             'users.user_id',
             'users.first_name',
@@ -33,14 +45,18 @@ class UserController extends Controller{
             'users.email',
             'users.phone',
             'users.created_at',
-            'user_status_lang.user_status_name'
+            'types_of_status_lang.status_type_name'
         )
         ->where('users.school_id', '=', auth()->user()->school_id)
-        ->where('user_status_lang.lang_id', $language->lang_id)
-        ->paginate(1);
+        ->where('types_of_status_lang.lang_id', $language->lang_id)
+        ->orderBy('users.created_at', 'desc')
+        ->paginate(10)
+        ->onEachSide(1);
 
         return response()->json($users, 200);
     }
+
+
 
     public function get_user(Request $request){
         $user = User::where('school_id', '=', auth()->user()->school_id)
@@ -75,6 +91,56 @@ class UserController extends Controller{
         $user->roles = $roles;
 
         return response()->json($user, 200);
+    }
+
+    public function invite_user(Request $request){
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|between:2,100',
+            'last_name' => 'required|string|between:2,100',
+            'email' => 'required|string|email|max:100',
+            'phone' => 'required|regex:/^((?!_).)*$/s',
+            'roles_count' => 'required|numeric|min:1',
+            'roles' => 'required|array'
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user = User::where('school_id', '=', auth()->user()->school_id)
+        ->where('user_id', '=', $request->user_id)
+        ->first();
+
+        $find_email = User::where('school_id', '=', auth()->user()->school_id)
+        ->where('email', '=', $request->email)
+        ->first();
+
+        if(isset($find_email)){
+            $email_error = ['email' => trans('auth.user_already_exists')];
+            return response()->json($email_error, 422);
+        }
+
+        $new_user = new User();
+        $new_user->first_name = $request->first_name;
+        $new_user->last_name = $request->last_name;
+        $new_user->email = $request->email;
+        $new_user->phone = $request->phone;
+        $new_user->school_id = auth()->user()->school_id;
+        $new_user->current_role_id = $request->roles[0];
+        $new_user->status_type_id = 4;
+        $new_user->email_hash = Str::random(16);
+        $new_user->save();
+
+        foreach ($request->roles as $key => $value) {
+            if($value != 1){
+                $user_role = new UserRole();
+                $user_role->user_id = $new_user->user_id;
+                $user_role->role_type_id = $value;
+                $user_role->save();
+            }
+        }
+
+        return response()->json($new_user, 200);
     }
 
     public function update_user(Request $request){

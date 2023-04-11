@@ -19,8 +19,8 @@ class CreateSchoolsTable extends Migration
             $table->string('school_name');
             $table->integer('school_type_id')->unsigned();
             $table->foreign('school_type_id')->references('school_type_id')->on('types_of_schools');
-            $table->integer('ban_status_id')->default(1)->unsigned();
-            $table->foreign('ban_status_id')->references('ban_status_id')->on('ban_status');
+            $table->integer('status_type_id')->default(1)->unsigned();
+            $table->foreign('status_type_id')->references('status_type_id')->on('types_of_status');
             $table->timestamps();
         });
     }

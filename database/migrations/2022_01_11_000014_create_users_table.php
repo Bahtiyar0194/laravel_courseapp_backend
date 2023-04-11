@@ -24,9 +24,12 @@ class CreateUsersTable extends Migration
             $table->foreign('school_id')->references('school_id')->on('schools')->onDelete('cascade');
             $table->integer('current_role_id')->unsigned();
             $table->foreign('current_role_id')->references('role_type_id')->on('types_of_user_roles');
-            $table->integer('ban_status_id')->default(1)->unsigned();
-            $table->foreign('ban_status_id')->references('ban_status_id')->on('ban_status');
-            $table->string('password');
+            $table->integer('status_type_id')->default(3)->unsigned();
+            $table->foreign('status_type_id')->references('status_type_id')->on('types_of_status');
+            $table->string('email_hash')->nullable();
+            $table->string('password')->nullable();
+            $table->timestamp('last_activity')->nullable();
+            $table->ipAddress('ip_address')->nullable();
             $table->timestamps();
         });
     }
