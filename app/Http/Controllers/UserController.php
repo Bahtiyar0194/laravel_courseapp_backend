@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\Language;
+
+use Mail;
+use App\Mail\WelcomeMail;
+
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
 use Str;
@@ -49,11 +53,42 @@ class UserController extends Controller{
         )
         ->where('users.school_id', '=', auth()->user()->school_id)
         ->where('types_of_status_lang.lang_id', $language->lang_id)
-        ->orderBy('users.created_at', 'desc')
-        ->paginate(10)
-        ->onEachSide(1);
+        ->orderBy('users.created_at', 'desc');
 
-        return response()->json($users, 200);
+        $first_name = $request->first_name;
+        $last_name = $request->last_name;
+        $email = $request->email;
+        $phone = $request->phone;
+        $created_at_from = $request->created_at_from.' 00:00:00';
+        $created_at_to = $request->created_at_to.' 23:59:00';
+
+        if (!empty($first_name)){
+            $users->where('users.first_name','LIKE','%'.$first_name.'%');
+        }
+
+        if (!empty($last_name)){
+            $users->where('users.last_name','LIKE','%'.$last_name.'%');
+        }
+
+        if (!empty($email)){
+            $users->where('users.email','LIKE','%'.$email.'%');
+        }
+
+        if (!empty($phone)){
+            $users->where('users.phone','LIKE','%'.$phone.'%');
+        }
+
+        // if (!empty($created_at_from) && !empty($created_at_to)) {
+        //     $users->whereBetween('users.created_at', [$created_at_from, $created_at_to]);
+        // }
+        // elseif(!empty($created_at_from)){
+        //     $users->where('users.created_at','>=', $created_at_from);
+        // }
+        // elseif(!empty($created_at_to)){
+        //     $users->where('users.created_at','<=', $created_at_to);
+        // }
+
+        return response()->json($users->paginate(10)->onEachSide(1), 200);
     }
 
 
@@ -140,6 +175,13 @@ class UserController extends Controller{
             }
         }
 
+        $mail_body = [
+            'first_name' => $request->first_name,
+            'url_a' => 'https://www.bacancytechnology.com/',
+            'url_b' => 'https://www.bacancytechnology.com/tutorials/laravel',
+        ];
+
+        Mail::to($new_user->email)->send(new WelcomeMail($mail_body));
         return response()->json($new_user, 200);
     }
 

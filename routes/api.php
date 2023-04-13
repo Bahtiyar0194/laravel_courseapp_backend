@@ -58,7 +58,7 @@ Route::group([
         'prefix' => 'users'
     ], function ($router) {
         Route::group(['middleware' => ['auth:sanctum']], function () {
-            Route::get('/get', [UserController::class, 'get_users']);
+            Route::post('/get', [UserController::class, 'get_users']);
             Route::get('/get/{user_id}', [UserController::class, 'get_user']);
             Route::get('/get_roles', [UserController::class, 'get_roles']);
             Route::post('/invite', [UserController::class, 'invite_user']); 
