@@ -33,6 +33,6 @@ class CheckSubdomain
             }
         }
 
-        return response()->json('', 200);
+        return response()->json('main', 200);
     }
 }

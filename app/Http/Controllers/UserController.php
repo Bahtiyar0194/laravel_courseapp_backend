@@ -40,6 +40,8 @@ class UserController extends Controller{
     public function get_users(Request $request){
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
+        $per_page = $request->per_page ? $request->per_page : 10;
+
         $users = User::leftJoin('types_of_status','users.status_type_id','=','types_of_status.status_type_id')
         ->leftJoin('types_of_status_lang','types_of_status.status_type_id','=','types_of_status_lang.status_type_id')
         ->select(
@@ -59,8 +61,8 @@ class UserController extends Controller{
         $last_name = $request->last_name;
         $email = $request->email;
         $phone = $request->phone;
-        $created_at_from = $request->created_at_from.' 00:00:00';
-        $created_at_to = $request->created_at_to.' 23:59:00';
+        $created_at_from = $request->created_at_from;
+        $created_at_to = $request->created_at_to;
 
         if (!empty($first_name)){
             $users->where('users.first_name','LIKE','%'.$first_name.'%');
@@ -78,17 +80,19 @@ class UserController extends Controller{
             $users->where('users.phone','LIKE','%'.$phone.'%');
         }
 
-        // if (!empty($created_at_from) && !empty($created_at_to)) {
-        //     $users->whereBetween('users.created_at', [$created_at_from, $created_at_to]);
-        // }
-        // elseif(!empty($created_at_from)){
-        //     $users->where('users.created_at','>=', $created_at_from);
-        // }
-        // elseif(!empty($created_at_to)){
-        //     $users->where('users.created_at','<=', $created_at_to);
-        // }
+        if ($created_at_from && $created_at_to) {
+            $users->whereBetween('users.created_at', [$created_at_from.' 00:00:00', $created_at_to.' 23:59:00']);
+        }
+        
+        if($created_at_from){
+            $users->where('users.created_at','>=', $created_at_from.' 00:00:00');
+        }
+        
+        if($created_at_to){
+            $users->where('users.created_at','<=', $created_at_to.' 23:59:00');
+        }
 
-        return response()->json($users->paginate(10)->onEachSide(1), 200);
+        return response()->json($users->paginate($per_page)->onEachSide(1), 200);
     }
 
 
