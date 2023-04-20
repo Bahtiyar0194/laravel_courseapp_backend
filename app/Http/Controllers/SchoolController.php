@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\SubscriptionPlan;
+
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
 
@@ -19,9 +21,11 @@ class SchoolController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function get_school()
-    {
-        //
+    public function get_subscription_plans(){
+        $plans = SubscriptionPlan::where('show_status_id', 1)
+        ->get();
+
+        return response()->json($plans, 200);
     }
 
     /**
@@ -30,8 +34,7 @@ class SchoolController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
+    public function store(Request $request){
         //
     }
 
@@ -41,8 +44,7 @@ class SchoolController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
-    {
+    public function show($id){
         //
     }
 
@@ -52,8 +54,7 @@ class SchoolController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
-    {
+    public function edit($id){
         //
     }
 
@@ -64,8 +65,7 @@ class SchoolController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id){
         //
     }
 
@@ -75,8 +75,7 @@ class SchoolController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
-    {
+    public function destroy($id){
         //
     }
 }

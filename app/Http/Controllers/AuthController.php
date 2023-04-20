@@ -137,7 +137,7 @@ class AuthController extends Controller
     $getSchool = School::where('school_domain', $request->school_domain)->first();
 
     if(!isset($getSchool)){
-        return $this->json('error', 'Login error', 401, ['auth_failed' => trans('auth.school_not_found')]);
+        return $this->json('error', 'Login error', 401, ['school_domain' => trans('auth.school_not_found')]);
     }
 
     $getSchoolUser = User::where('email', $request->email)
