@@ -1,12 +1,9 @@
 @component('mail::message')
-# Introduction
 
-The body of your message.
+<b>Добро пожаловать {{$mail_body->first_name}}!</b>
+<p>Вас приветствует {{$mail_body->school_name}}</p>
 
-@component('mail::button', ['url' => ''])
-Button Text
-@endcomponent
 
-Thanks,<br>
-{{ config('app.name') }}
+<p>Для активации Вашего акааунта просим перейти по данной <a href="{{$mail_body->activation_url}}">ссылке</a></p>
+
 @endcomponent

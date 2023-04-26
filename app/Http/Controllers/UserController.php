@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\Language;
+use App\Models\School;
 
 use Mail;
 use App\Mail\WelcomeMail;
@@ -159,6 +160,8 @@ class UserController extends Controller{
             return response()->json($email_error, 422);
         }
 
+        $email_hash = Str::random(32);
+
         $new_user = new User();
         $new_user->first_name = $request->first_name;
         $new_user->last_name = $request->last_name;
@@ -167,7 +170,7 @@ class UserController extends Controller{
         $new_user->school_id = auth()->user()->school_id;
         $new_user->current_role_id = $request->roles[0];
         $new_user->status_type_id = 4;
-        $new_user->email_hash = Str::random(16);
+        $new_user->email_hash = $email_hash;
         $new_user->save();
 
         foreach ($request->roles as $key => $value) {
@@ -179,11 +182,12 @@ class UserController extends Controller{
             }
         }
 
-        $mail_body = [
-            'first_name' => $request->first_name,
-            'url_a' => 'https://www.bacancytechnology.com/',
-            'url_b' => 'https://www.bacancytechnology.com/tutorials/laravel',
-        ];
+        $getSchool = School::find(auth()->user()->school_id);
+
+        $mail_body = new \stdClass();
+        $mail_body->first_name = $request->first_name;
+        $mail_body->activation_url = $request->header('Origin').'/activation/'.$email_hash;
+        $mail_body->school_name = $getSchool->school_name;
 
         Mail::to($new_user->email)->send(new WelcomeMail($mail_body));
         return response()->json($new_user, 200);

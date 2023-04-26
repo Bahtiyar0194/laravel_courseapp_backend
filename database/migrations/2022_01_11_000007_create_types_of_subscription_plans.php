@@ -16,7 +16,7 @@ class CreateTypesOfSubscriptionPlans extends Migration
         Schema::create('types_of_subscription_plans', function (Blueprint $table) {
             $table->increments('subscription_plan_id');
             $table->string('subscription_plan_name');
-            $table->integer('disc_space');
+            $table->integer('disk_space');
             $table->integer('max_users_count');
             $table->integer('max_courses_count');
             $table->integer('price');
