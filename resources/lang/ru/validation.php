@@ -186,6 +186,8 @@ return [
         'password'              => 'Пароль',
         'password_confirmation' => 'Подтверждение пароля',
 
+        'recovery_code'         => 'Код восстановления пароля',
+
         'school_name'           => 'Название школы',
         'school_domain'         => 'Доменное имя',
 

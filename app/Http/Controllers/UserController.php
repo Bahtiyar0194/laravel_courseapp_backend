@@ -185,6 +185,7 @@ class UserController extends Controller{
         $getSchool = School::find(auth()->user()->school_id);
 
         $mail_body = new \stdClass();
+        $mail_body->subject = $getSchool->school_name;
         $mail_body->first_name = $request->first_name;
         $mail_body->activation_url = $request->header('Origin').'/activation/'.$email_hash;
         $mail_body->school_name = $getSchool->school_name;

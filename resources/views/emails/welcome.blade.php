@@ -1,9 +1,9 @@
-@component('mail::message')
+@extends('layouts.email')
 
-<b>Добро пожаловать {{$mail_body->first_name}}!</b>
-<p>Вас приветствует {{$mail_body->school_name}}</p>
+@section('title', '{{$mail_body->school_name}}')
 
-
-<p>Для активации Вашего акааунта просим перейти по данной <a href="{{$mail_body->activation_url}}">ссылке</a></p>
-
-@endcomponent
+@section('content')
+<b>{{$mail_body->first_name}}, Добро пожаловать!</b>
+<p>Вас приветствует {{$mail_body->school_name}}.</p>
+<p>Для активации Вашего аккаунта просим Вас перейти по данной <a href="{{$mail_body->activation_url}}">ссылке</a></p>
+@endsection

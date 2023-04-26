@@ -36,6 +36,8 @@ Route::group([
         Route::post('/register', [AuthController::class, 'register']);
         Route::get('/get_activation_user/{hash}', [AuthController::class, 'get_activation_user']);
         Route::post('/activate_user/{hash}', [AuthController::class, 'activate_user']);
+        Route::post('/forgot_password', [AuthController::class, 'forgot_password']);
+        Route::post('/password_recovery', [AuthController::class, 'password_recovery']);
 
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/me', [AuthController::class, 'me']);
@@ -54,6 +56,7 @@ Route::group([
     Route::group([
         'prefix' => 'contacts'
     ], function ($router) {
+                //Route::view('/email', 'emails/welcome');
         Route::get('/send', [ContactController::class, 'send']);
     });
 

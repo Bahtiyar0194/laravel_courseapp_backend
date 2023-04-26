@@ -171,6 +171,8 @@ return [
         'password'              => 'Құпия сөз',
         'password_confirmation' => 'Құпия сөзді растау',
 
+        'recovery_code'         => 'Құпия сөзді қалпына келтіру коды',
+
         'school_name'           => 'Мектептің атауы',
         'school_domain'         => 'Домендік атауы',
 
