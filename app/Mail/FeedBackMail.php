@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class PasswordRecoveryMail extends Mailable
+class FeedBackMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -29,6 +29,6 @@ class PasswordRecoveryMail extends Mailable
      */
     public function build()
     {
-        return $this->subject($this->mail_body->subject)->markdown('emails.password_recovery')->with('mail_body', $this->mail_body);
-    }
+     return $this->subject($this->mail_body->subject)->markdown('emails.feedback')->with('mail_body', $this->mail_body);
+ }
 }

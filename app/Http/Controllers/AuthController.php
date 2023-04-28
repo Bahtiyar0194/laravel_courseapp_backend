@@ -323,6 +323,13 @@ public function me(Request $request){
     )
     ->get();
 
+    foreach ($roles as $key => $role) {
+        if($role->role_type_id == $user->current_role_id){
+            $user->current_role_name = $role->user_role_type_name;
+            break;
+        }
+    }
+
     $user->roles = $roles;
 
     return response()->json([

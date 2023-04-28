@@ -165,7 +165,7 @@ return [
     'attributes' => [
         'name'                  => 'Аты',
         'username'              => 'Тегі',
-        'email'                 => 'E-Mail пошта',
+        'email'                 => 'Электрондық пошта',
         'first_name'            => 'Аты',
         'last_name'             => 'Тегі',
         'password'              => 'Құпия сөз',

@@ -3,29 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
-use App\Models\SubscriptionPlan;
 
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
 
-class SchoolController extends Controller
-{
+class SchoolController extends Controller{
     use ApiResponser;
 
     public function __construct(Request $request){
         app()->setLocale($request->header('Accept-Language'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function get_subscription_plans(){
-        $plans = SubscriptionPlan::where('show_status_id', 1)
-        ->get();
-
-        return response()->json($plans, 200);
     }
 
     /**
