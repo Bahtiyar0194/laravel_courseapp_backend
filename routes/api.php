@@ -89,7 +89,9 @@ Route::group([
         'prefix' => 'media'
     ], function ($router) {
         Route::group(['middleware' => ['auth:sanctum']], function () {
-            Route::get('/get', [MediaController::class, 'get_school_files']);
+            Route::get('/get_disk_space', [MediaController::class, 'get_disk_space']);
+            Route::post('/get', [MediaController::class, 'get_school_files']);
+            Route::get('/types_of_media_files', [MediaController::class, 'types_of_media_files']);
             Route::post('/upload_image', [MediaController::class, 'upload_image'])->middleware('check_roles');
             Route::post('/upload_video', [MediaController::class, 'upload_video'])->middleware('check_roles');
             Route::post('/upload_audio', [MediaController::class, 'upload_audio'])->middleware('check_roles');
@@ -118,25 +120,25 @@ Route::group([
     Route::group([
         'prefix' => 'lessons'
     ], function ($router){
-     Route::group(['middleware' => ['auth:sanctum']], function () {
-         Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
-         Route::post('/update/{lesson_id}', [LessonController::class, 'edit'])->middleware('check_roles');
-         Route::post('/delete/{lesson_id}', [LessonController::class, 'delete'])->middleware('check_roles');
-         Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
-         Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
-         Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
-     });
- });
+       Route::group(['middleware' => ['auth:sanctum']], function () {
+           Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
+           Route::post('/update/{lesson_id}', [LessonController::class, 'edit'])->middleware('check_roles');
+           Route::post('/delete/{lesson_id}', [LessonController::class, 'delete'])->middleware('check_roles');
+           Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
+           Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
+           Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
+       });
+   });
 
     Route::group([
         'prefix' => 'tasks'
     ], function ($router){
         Route::group(['middleware' => ['auth:sanctum']], function () {
-         Route::get('/{task_id}', [TaskController::class, 'get_task']);
-         Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
-         Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
-         Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
-         Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
-     });
+           Route::get('/{task_id}', [TaskController::class, 'get_task']);
+           Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
+           Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
+           Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
+           Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
+       });
     });
 });

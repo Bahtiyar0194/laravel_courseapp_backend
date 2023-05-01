@@ -65,23 +65,23 @@ class UserController extends Controller{
         $created_at_from = $request->created_at_from;
         $created_at_to = $request->created_at_to;
 
-        if (!empty($first_name)){
+        if(!empty($first_name)){
             $users->where('users.first_name','LIKE','%'.$first_name.'%');
         }
 
-        if (!empty($last_name)){
+        if(!empty($last_name)){
             $users->where('users.last_name','LIKE','%'.$last_name.'%');
         }
 
-        if (!empty($email)){
+        if(!empty($email)){
             $users->where('users.email','LIKE','%'.$email.'%');
         }
 
-        if (!empty($phone)){
+        if(!empty($phone)){
             $users->where('users.phone','LIKE','%'.$phone.'%');
         }
 
-        if ($created_at_from && $created_at_to) {
+        if($created_at_from && $created_at_to) {
             $users->whereBetween('users.created_at', [$created_at_from.' 00:00:00', $created_at_to.' 23:59:00']);
         }
         
