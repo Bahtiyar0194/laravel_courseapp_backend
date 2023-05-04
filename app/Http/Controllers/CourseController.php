@@ -141,6 +141,7 @@ class CourseController extends Controller{
 
     public function create(Request $request){
         $max_file_size = 1;
+        $school_id = auth()->user()->school_id;
 
         $validator = Validator::make($request->all(), [
             'course_name' => 'required|string|between:3, 300',
@@ -166,7 +167,7 @@ class CourseController extends Controller{
         if(isset($request->course_poster)){
             $file = $request->file('course_poster');
             $file_name = $file->hashName();
-            $file->storeAs('/images/', $file_name);
+            $file->storeAs('/course_posters/', $file_name);
         }
         else{
             $file_name = 'default.svg';
@@ -178,7 +179,7 @@ class CourseController extends Controller{
         $new_course->course_poster_file = $file_name;
         $new_course->course_category_id = $request->course_category_id;
         $new_course->course_lang_id = $request->course_language_id;
-        $new_course->school_id = auth()->user()->school_id;
+        $new_course->school_id = $school_id;
         $new_course->course_cost = $course_cost;
         $new_course->save();
 
@@ -227,7 +228,7 @@ class CourseController extends Controller{
 
 
     public function poster($file_name){
-        $path = storage_path('/app/images/'.$file_name);
+        $path = storage_path('/app/course_posters/'.$file_name);
 
         if (!File::exists($path)) {
             return response()->json('Poster not found', 404);

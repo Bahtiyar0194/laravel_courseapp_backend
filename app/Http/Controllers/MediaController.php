@@ -114,69 +114,6 @@ class MediaController extends Controller{
         return response()->json($types_of_media_files, 200);
     }
 
-    public function upload_image(Request $request){
-        $file_type_id = 4;
-        $max_image_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
-        ->first()->max_file_size_mb;
-
-        $school_id = auth()->user()->school_id;
-
-        $validator = Validator::make($request->all(), [
-            'image_name' => 'required|string|between:3, 100',
-            'image_file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size
-        ]);
-
-        if($validator->fails()){
-            return $this->json('error', 'Image upload error', 422, $validator->errors());
-        }
-
-        $media_file = new MediaFile();
-        $media_file->file_name = $request->image_name;
-
-        $file = $request->file('image_file');
-        $file_target = $file->hashName();
-
-        $media_file->file_target = $file_target;
-        $media_file->file_type_id = $file_type_id;
-        $media_file->size = $file->getSize() / 1048576;
-
-        $file->storeAs('/images/', $file_target);
-
-        $media_file->school_id = $school_id;
-        $media_file->save();
-
-        $user_operation = new UserOperation();
-        $user_operation->operator_id = auth()->user()->user_id;
-        $user_operation->operation_type_id = 9;
-        $user_operation->save();
-        
-        return $this->json('success', 'Upload image successful', 200, $media_file);
-    }
-
-    public function get_image(Request $request){
-        $image_file = MediaFile::where('file_id', $request->file_id)
-        ->first();
-
-        if(isset($image_file)){
-            $path = storage_path('/app/images/'.$image_file->file_target);
-
-            if (!File::exists($path)) {
-                return response()->json('Image not found', 404);
-            }
-
-            $file = File::get($path);
-            $type = File::mimeType($path);
-
-            $response = Response::make($file, 200);
-            $response->header("Content-Type", $type);
-
-            return $response;
-        }
-        else{
-            return response()->json('Image not found', 404);
-        }
-    }
-
     public function upload_video(Request $request){
         $file_type_id = 1;
         $max_video_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
@@ -185,10 +122,10 @@ class MediaController extends Controller{
         $school_id = auth()->user()->school_id;
 
         $validator = Validator::make($request->all(), [
-            'video_name' => 'required|string|between:3, 100',
             'video_type' => 'required',
+            'video_name' => 'nullable|required_if:video_type,video_file|string|between:3, 100',
             'video_file' => 'nullable|required_if:video_type,video_file|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$max_video_file_size,
-            'video_link' => 'nullable|required_if:video_type,video_url|url',
+            'selected_video_id' => 'nullable|required_if:video_type,video_from_media|numeric'
         ]);
 
         if($validator->fails()){
@@ -196,27 +133,23 @@ class MediaController extends Controller{
         }
 
         if($request->video_type == 'video_from_media'){
-            $media_file = [];
+            $media_file = MediaFile::where('school_id', '=', $school_id)
+            ->where('file_type_id', '=', 1)
+            ->where('file_id', '=', $request->selected_video_id)
+            ->first();
         }
         else{
             $media_file = new MediaFile();
             $media_file->file_name = $request->video_name;
 
-            if($request->video_type == 'video_file'){ 
-                $file = $request->file('video_file');
-                $file_target = $file->hashName();
+            $file = $request->file('video_file');
+            $file_target = $file->hashName();
 
-                $media_file->file_target = $file_target;
-                $media_file->file_type_id = $file_type_id;
-                $media_file->size = $file->getSize() / 1048576;
+            $media_file->file_target = $file_target;
+            $media_file->file_type_id = $file_type_id;
+            $media_file->size = $file->getSize() / 1048576;
 
-                $file->storeAs('/videos/schools/'.$school_id, $file_target);  
-            }
-            elseif($request->video_type == 'video_url'){
-                $media_file->file_target = $request->video_link;
-                $media_file->file_type_id = 2;
-                $media_file->size = null;
-            }
+            $file->storeAs('/schools/'.$school_id.'/videos/', $file_target);  
 
             $media_file->school_id = $school_id;
             $media_file->save();
@@ -250,18 +183,13 @@ class MediaController extends Controller{
                     ->first();
 
                     if(isset($video_file)){
-                        if($video_file->file_type_id == 1){
-                            $path = storage_path('/app/videos/schools/'.$school->school_id.'/'.$video_file->file_target);
+                        $path = storage_path('/app/schools/'.$school->school_id.'/videos/'.$video_file->file_target);
 
-                            if (!File::exists($path)) {
-                                return response()->json('Video not found', 404);
-                            }
-                            
-                            $response = VideoStreamer::streamFile($path);
+                        if (!File::exists($path)) {
+                            return response()->json('Video not found', 404);
                         }
-                        elseif($video_file->file_type_id == 2){
-                            $response = $video_file->file_target;
-                        }
+
+                        $response = VideoStreamer::streamFile($path);
                         return $response;
                     }
                     else{
@@ -281,25 +209,38 @@ class MediaController extends Controller{
         }
     }
 
+    public function get_videos(Request $request){
+        $videos = MediaFile::where('school_id', auth()->user()->school_id)
+        ->where('file_type_id', 1)
+        ->get();
+
+        return response()->json($videos, 200);
+    }
+
 
     public function upload_audio(Request $request){
-        $file_type_id = 3;
+        $file_type_id = 2;
         $max_audio_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
         ->first()->max_file_size_mb;
 
         $school_id = auth()->user()->school_id;
 
         $validator = Validator::make($request->all(), [
-            'audio_name' => 'required|string|between:3, 100',
-            'audio_file' => 'required|file|mimes:mp3,m4a,opus,oga,flac,ogg,webm,weba,wav,wma|max_mb:'.$max_audio_file_size,
-        ]);
+          'audio_type' => 'required',
+          'audio_name' => 'nullable|required_if:audio_type,audio_file|string|between:3, 100',
+          'audio_file' => 'nullable|required_if:audio_type,audio_file|file|mimes:mp3,m4a,opus,oga,flac,ogg,webm,weba,wav,wma|max_mb:'.$max_audio_file_size,
+          'selected_audio_id' => 'nullable|required_if:audio_type,audio_from_media|numeric'
+      ]);
 
         if($validator->fails()){
             return $this->json('error', 'Audio upload error', 422, $validator->errors());
         }
 
-        if($request->video_type == 'audio_from_media'){
-            $media_file = [];
+        if($request->audio_type == 'audio_from_media'){
+            $media_file = MediaFile::where('school_id', '=', $school_id)
+            ->where('file_type_id', '=', 2)
+            ->where('file_id', '=', $request->selected_audio_id)
+            ->first();
         }
         else{
             $media_file = new MediaFile();
@@ -312,7 +253,7 @@ class MediaController extends Controller{
             $media_file->file_type_id = $file_type_id;
             $media_file->size = $file->getSize() / 1048576;
 
-            $file->storeAs('/audios/schools/'.$school_id, $file_target);  
+            $file->storeAs('/schools/'.$school_id.'/audios/', $file_target);  
 
             $media_file->school_id = $school_id;
             $media_file->save();
@@ -346,7 +287,7 @@ class MediaController extends Controller{
                     ->first();
 
                     if(isset($audio_file)){
-                        $path = storage_path('/app/audios/schools/'.$school->school_id.'/'.$audio_file->file_target);
+                        $path = storage_path('/app/schools/'.$school->school_id.'/audios/'.$audio_file->file_target);
 
                         if (!File::exists($path)) {
                             return response()->json('Audio not found', 404);
@@ -369,6 +310,177 @@ class MediaController extends Controller{
         }
         else{
             return response()->json('Access denied', 403);
+        }
+    }
+
+    public function get_audios(Request $request){
+        $audios = MediaFile::where('school_id', auth()->user()->school_id)
+        ->where('file_type_id', 2)
+        ->get();
+
+        return response()->json($audios, 200);
+    }
+
+    public function upload_image(Request $request){
+        $file_type_id = 3;
+        $max_image_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
+        ->first()->max_file_size_mb;
+
+        $school_id = auth()->user()->school_id;
+
+        $validator = Validator::make($request->all(), [
+            'image_type' => 'required',
+            'image_name' => 'nullable|required_if:image_type,image_file|string|between:3, 100',
+            'image_file' => 'nullable|required_if:image_type,image_file|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size,
+            'selected_image_id' => 'nullable|required_if:image_type,image_from_media|numeric'
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Image upload error', 422, $validator->errors());
+        }
+
+        if($request->image_type == 'image_from_media'){
+            $media_file = MediaFile::where('school_id', '=', $school_id)
+            ->where('file_type_id', '=', 3)
+            ->where('file_id', '=', $request->selected_image_id)
+            ->first();
+        }
+        else{
+            $media_file = new MediaFile();
+            $media_file->file_name = $request->image_name;
+
+            $file = $request->file('image_file');
+            $file_target = $file->hashName();
+
+            $media_file->file_target = $file_target;
+            $media_file->file_type_id = $file_type_id;
+            $media_file->size = $file->getSize() / 1048576;
+
+            $file->storeAs('schools/'.$school_id.'/images/', $file_target);
+
+            $media_file->school_id = $school_id;
+            $media_file->save();
+
+            $user_operation = new UserOperation();
+            $user_operation->operator_id = auth()->user()->user_id;
+            $user_operation->operation_type_id = 9;
+            $user_operation->save();
+        }
+        
+        return $this->json('success', 'Upload image successful', 200, $media_file);
+    }
+
+    public function get_images(Request $request){
+        $images = MediaFile::where('school_id', auth()->user()->school_id)
+        ->where('file_type_id', 3)
+        ->get();
+
+        return response()->json($images, 200);
+    }
+
+    public function get_image(Request $request){
+        $origin = parse_url($request->header('Referer'));
+
+        if(isset($origin['host'])){
+            $host = $origin['host'];
+            $parts = explode('.', $host);
+
+            if(count($parts) == 2){
+                $subdomain = $parts[0];
+                $school = School::where('school_domain', $subdomain)->first();
+
+                if(isset($school)){
+                    $image_file = MediaFile::where('school_id', $school->school_id)
+                    ->where('file_id', $request->file_id)
+                    ->first();
+
+                    if(isset($image_file)){
+                        $path = storage_path('/app/schools/'.$school->school_id.'/images/'.$image_file->file_target);
+
+                        if (!File::exists($path)) {
+                            return response()->json('Image not found', 404);
+                        }
+
+                        $file = File::get($path);
+                        $type = File::mimeType($path);
+
+                        $response = Response::make($file, 200);
+                        $response->header("Content-Type", $type);
+
+                        return $response;
+                    }
+                    else{
+                        return response()->json('Access denied', 403);
+                    }
+                }
+                else{
+                    return response()->json('Access denied', 403);
+                }
+            }
+            else{
+                return response()->json('Access denied', 403);
+            }
+        }
+        else{
+            return response()->json('Access denied', 403);
+        }
+    }
+
+    public function update_file(Request $request){
+        $validator = Validator::make($request->all(), [
+            'file_name' => 'required|string|between:3, 300'
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'File update error', 422, $validator->errors());
+        }
+
+        $find_file = MediaFile::where('file_id', $request->file_id)
+        ->where('school_id', auth()->user()->school_id)
+        ->first();
+
+        if(isset($find_file)){
+            $find_file->file_name = $request->file_name;
+            $find_file->save();
+
+            return $this->json('success', 'File update successful', 200, 'success');
+        }
+        else{
+            return response()->json('File not found', 404);
+        }
+    }
+
+    public function delete_file(Request $request){
+        $school_id = auth()->user()->school_id;
+        $find_file = MediaFile::where('file_id', $request->file_id)
+        ->where('school_id', $school_id)
+        ->first();
+
+        if(isset($find_file)){
+            $find_file->delete();
+
+            if($find_file->file_type_id == 1){
+                $folder = 'videos';
+            }
+            elseif($find_file->file_type_id == 2){
+                $folder = 'audios';
+            }
+            elseif($find_file->file_type_id == 3){
+                $folder = 'images';
+            }
+
+            $path = storage_path('/app/schools/'.$school_id.'/'.$folder.'/'.$find_file->file_target);
+
+            if (!File::exists($path)) {
+                return response()->json('File not found', 404);
+            }
+
+            File::delete($path);
+
+            return $this->json('success', 'File delete successful', 200, 'success');
+        }
+        else{
+            return response()->json('File not found', 404);
         }
     }
 }

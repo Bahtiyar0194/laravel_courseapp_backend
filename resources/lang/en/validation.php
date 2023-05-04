@@ -138,8 +138,14 @@ return [
         'video_file' => [
             'required_if' => 'Please, attach a video file',
         ],
-        'video_link' => [
-            'required_if' => 'Enter the link',
+        'selected_video_id' => [
+            'required_if' => 'Please, select a video file',
+        ],
+        'audio_file' => [
+            'required_if' => 'Please, attach an audio file',
+        ],
+        'selected_audio_id' => [
+            'required_if' => 'Please, select an audio file',
         ],
         'image_file' => [
             'required' => 'Please, attach an image file',
@@ -170,6 +176,7 @@ return [
         'course_cost'           => 'course cost',
         'course_poster'         => 'course poster',
 
+        'file_name'             => 'file name',
         'video_name'            => 'video name',
         'audio_name'            => 'audio name',
 

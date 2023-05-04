@@ -39,15 +39,15 @@ if (!function_exists('create_blocks')){
 			}
 
 			if(isset($block->file_type_id)){
-				if($block->file_type_id == 1 || $block->file_type_id == 2){
+				if($block->file_type_id == 1){
 					$block_type = 'video';
 				}
 
-				if($block->file_type_id == 3){
+				if($block->file_type_id == 2){
 					$block_type = 'audio';
 				}
 
-				if($block->file_type_id == 4){
+				if($block->file_type_id == 3){
 					$block_type = 'image';
 				}
 			}
@@ -451,15 +451,15 @@ if (!function_exists('create_test_question_blocks')){
 			}
 
 			if(isset($question_block->file_type_id)){
-				// if($question_block->file_type_id == 1 || $question_block->file_type_id == 2){
+				// if($question_block->file_type_id == 1){
 				// 	$block_type = 'video';
 				// }
 
-				if($question_block->file_type_id == 3){
+				if($question_block->file_type_id == 2){
 					$block_type = 'audio';
 				}
 
-				if($question_block->file_type_id == 4){
+				if($question_block->file_type_id == 3){
 					$block_type = 'image';
 				}
 			}

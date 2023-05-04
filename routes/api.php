@@ -92,14 +92,22 @@ Route::group([
             Route::get('/get_disk_space', [MediaController::class, 'get_disk_space']);
             Route::post('/get', [MediaController::class, 'get_school_files']);
             Route::get('/types_of_media_files', [MediaController::class, 'types_of_media_files']);
-            Route::post('/upload_image', [MediaController::class, 'upload_image'])->middleware('check_roles');
+
             Route::post('/upload_video', [MediaController::class, 'upload_video'])->middleware('check_roles');
             Route::post('/upload_audio', [MediaController::class, 'upload_audio'])->middleware('check_roles');
+            Route::post('/upload_image', [MediaController::class, 'upload_image'])->middleware('check_roles');
+
+            Route::get('/get_videos', [MediaController::class, 'get_videos']);
+            Route::get('/get_audios', [MediaController::class, 'get_audios']);
+            Route::get('/get_images', [MediaController::class, 'get_images']);
+
+            Route::post('/update/{file_id}', [MediaController::class, 'update_file'])->middleware('check_roles');
+            Route::post('/delete/{file_id}', [MediaController::class, 'delete_file'])->middleware('check_roles');
         });
 
-        Route::get('/image/{file_id}', [MediaController::class, 'get_image']);
         Route::get('/video/{file_id}', [MediaController::class, 'get_video']);
         Route::get('/audio/{file_id}', [MediaController::class, 'get_audio']);
+        Route::get('/image/{file_id}', [MediaController::class, 'get_image']);
     });
 
     Route::group([

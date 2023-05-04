@@ -135,13 +135,16 @@ return [
 
     'custom' => [
         'video_file' => [
-            'required_if' => 'Бейнежазбаны таңдаңыз',
+            'required_if' => 'Cіз бейнежазбаны таңдауыңыз қажет',
         ],
-        'video_link' => [
-            'required_if' => 'Сілтемені енгізіңіз',
+        'selected_video_id' => [
+            'required_if' => 'Cіз бейнежазбаны таңдауыңыз қажет',
         ],
         'audio_file' => [
-            'required' => 'Выберите аудиофайл',
+            'required_if' => 'Сіз аудиожазбаны таңдауыңыз қажет',
+        ],
+        'selected_audio_id' => [
+            'required_if' => 'Сіз аудиожазбаны таңдауыңыз қажет',
         ],
         'image_file' => [
             'required' => 'Кескінді таңдаңыз',
@@ -186,8 +189,9 @@ return [
         'lesson_name'           => 'Сабақтың атауы',
         'lesson_description'    => 'Сабақтың қысқаша сипаттамасы',
 
+        'file_name'             => 'Файлдың аты',
         'video_name'            => 'Бейнежазбаның аты',
-        'audio_name'            => 'Дыбыстың аты',
+        'audio_name'            => 'Aудиожазбаның аты',
         'image_name'            => 'Кескіннің аты',
 
         'task_name'             => 'Тапсырманың аты',

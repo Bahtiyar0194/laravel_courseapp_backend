@@ -146,14 +146,20 @@ return [
         'video_file' => [
             'required_if' => 'Выберите видеофайл',
         ],
-        'video_link' => [
-            'required_if' => 'Укажите ссылку от видео',
+        'selected_video_id' => [
+            'required_if' => 'Выберите видеофайл',
         ],
         'audio_file' => [
-            'required' => 'Выберите аудиофайл',
+            'required_if' => 'Выберите аудиофайл',
+        ],
+        'selected_audio_id' => [
+            'required_if' => 'Выберите аудиофайл',
         ],
         'image_file' => [
             'required' => 'Выберите файл изображения',
+        ],
+        'selected_image_id' => [
+            'required_if' => 'Выберите файл изображения',
         ],
         'roles_count' => [
             'min' => 'Количество ролей пользователя должно быть не меньше :min',
@@ -202,6 +208,7 @@ return [
         'lesson_name'           => 'Название урока',
         'lesson_description'    => 'Описание урока',
 
+        'file_name'             => 'Название файла',
         'video_name'            => 'Название видео',
         'audio_name'            => 'Название аудио',
 

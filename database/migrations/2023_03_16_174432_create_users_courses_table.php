@@ -20,7 +20,7 @@ class CreateUsersCoursesTable extends Migration
             $table->integer('recipient_id')->unsigned();
             $table->foreign('recipient_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->integer('course_id')->unsigned();
-            $table->foreign('course_id')->references('course_id')->on('courses');
+            $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
             $table->float('cost')->default(0);
             $table->integer('subscribe_type_id')->unsigned();
             $table->foreign('subscribe_type_id')->references('subscribe_type_id')->on('types_of_course_subscribes');
