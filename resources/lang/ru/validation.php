@@ -156,7 +156,7 @@ return [
             'required_if' => 'Выберите аудиофайл',
         ],
         'image_file' => [
-            'required' => 'Выберите файл изображения',
+            'required_if' => 'Выберите файл изображения',
         ],
         'selected_image_id' => [
             'required_if' => 'Выберите файл изображения',
@@ -200,8 +200,11 @@ return [
         'current_password'      => 'Текущий пароль',
         'course_name'           => 'Название курса',
         'course_description'    => 'Описание курса',
+        'course_content'        => 'Полное описание курса',
         'course_category_id'    => 'Категория курса',
-        'course_language_id'    => 'Язык курса',
+        'course_lang_id'        => 'Язык курса',
+        'level_type_id'         => 'Уровень прохождения курса',
+        'author_id'             => 'Автор курса',
         'course_cost'           => 'Стоимость курса',
         'course_poster'         => 'Обложка курса',
 

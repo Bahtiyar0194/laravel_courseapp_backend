@@ -149,6 +149,11 @@ class MediaController extends Controller{
             $media_file->file_type_id = $file_type_id;
             $media_file->size = $file->getSize() / 1048576;
 
+            //App/Helpers
+            if(lack_of_disk_space($media_file->size, $school_id)){
+                return $this->json('error', 'Image upload error', 422, ['lack_of_disk_space' => true]);
+            }
+
             $file->storeAs('/schools/'.$school_id.'/videos/', $file_target);  
 
             $media_file->school_id = $school_id;
@@ -253,6 +258,11 @@ class MediaController extends Controller{
             $media_file->file_type_id = $file_type_id;
             $media_file->size = $file->getSize() / 1048576;
 
+            //App/Helpers
+            if(lack_of_disk_space($media_file->size, $school_id)){
+                return $this->json('error', 'Image upload error', 422, ['lack_of_disk_space' => true]);
+            }
+
             $file->storeAs('/schools/'.$school_id.'/audios/', $file_target);  
 
             $media_file->school_id = $school_id;
@@ -346,6 +356,7 @@ class MediaController extends Controller{
             ->first();
         }
         else{
+
             $media_file = new MediaFile();
             $media_file->file_name = $request->image_name;
 
@@ -355,6 +366,11 @@ class MediaController extends Controller{
             $media_file->file_target = $file_target;
             $media_file->file_type_id = $file_type_id;
             $media_file->size = $file->getSize() / 1048576;
+
+            //App/Helpers
+            if(lack_of_disk_space($media_file->size, $school_id)){
+                return $this->json('error', 'Image upload error', 422, ['lack_of_disk_space' => true]);
+            }
 
             $file->storeAs('schools/'.$school_id.'/images/', $file_target);
 

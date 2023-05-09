@@ -148,7 +148,10 @@ return [
             'required_if' => 'Please, select an audio file',
         ],
         'image_file' => [
-            'required' => 'Please, attach an image file',
+            'required_if' => 'Please, attach an image file',
+        ],
+        'selected_image_id' => [
+            'required_if' => 'Please, attach an image file',
         ],
         'roles_count' => [
             'min' => 'The number of user roles must be at least :min',
@@ -171,8 +174,11 @@ return [
         'school_domain'         => 'school domain',
         'course_name'           => 'course name',
         'course_description'    => 'course description',
+        'course_content'        => 'course content',
         'course_category_id'    => 'course category',
-        'course_language_id'    => 'course language',
+        'course_lang_id'        => 'course language',
+        'level_type_id'         => 'course level',
+        'author_id'             => 'course author',
         'course_cost'           => 'course cost',
         'course_poster'         => 'course poster',
 

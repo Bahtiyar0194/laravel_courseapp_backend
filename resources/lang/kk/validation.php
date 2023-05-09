@@ -147,7 +147,10 @@ return [
             'required_if' => 'Сіз аудиожазбаны таңдауыңыз қажет',
         ],
         'image_file' => [
-            'required' => 'Кескінді таңдаңыз',
+            'required_if' => 'Cіз кескінді таңдауыңыз қажет',
+        ],
+        'selected_image_id' => [
+            'required_if' => 'Cіз кескінді таңдауыңыз қажет',
         ],
         'roles_count' => [
             'min' => 'Қолданушы рөлдерінің саны :min-ден кем болмауы керек',
@@ -181,8 +184,11 @@ return [
 
         'course_name'           => 'Курстың атауы',
         'course_description'    => 'Курстың қысқаша сипаттамасы',
+        'course_content'        => 'Курстың толық сипаттамасы',
         'course_category_id'    => 'Курстың санаты',
-        'course_language_id'    => 'Курс тілі',
+        'course_lang_id'        => 'Курстың тілі',
+        'level_type_id'         => 'Курстың өту деңгейі',
+        'author_id'             => 'Курстың авторы',
         'course_cost'           => 'Курстың бағасы',
         'course_poster'         => 'Курстың мұқабасы',
 

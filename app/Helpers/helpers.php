@@ -20,8 +20,30 @@ use App\Models\TestQuestionImage;
 use App\Models\TestQuestionAudio;
 use App\Models\TestQuestionCode;
 
+use App\Models\SubscriptionPlan;
+use App\Models\MediaFile;
+use App\Models\School;
+
+if (!function_exists('lack_of_disk_space')){
+	function lack_of_disk_space($file_size, $school_id){
+		$school = School::find($school_id);
+		$subscription_plan = SubscriptionPlan::find($school->subscription_plan_id);
+		$media_files = MediaFile::where('school_id', '=', $school_id)->get();
+		$media_files_size_sum = $media_files->sum('size');
+
+		$free_space_mb = $subscription_plan->disk_space - $media_files_size_sum;
+
+		if($file_size > $free_space_mb){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+}
+
 if (!function_exists('create_blocks')){
-	function create_blocks($target_id, $blocks, $opertion_type){
+	function create_blocks($target_id, $blocks, $operation_type){
 		foreach ($blocks as $key => $block) {
 
 			if(isset($block->block_type_id)){
@@ -52,7 +74,7 @@ if (!function_exists('create_blocks')){
 				}
 			}
 
-			if($opertion_type == 'lesson'){
+			if($operation_type == 'lesson'){
 				$new_lesson_block = new LessonBlock();
 
 				if($block_type == 'text'){
@@ -127,7 +149,7 @@ if (!function_exists('create_blocks')){
 					$new_lesson_code->save();
 				}
 			}
-			elseif($opertion_type == 'task') {
+			elseif($operation_type == 'task') {
 				$new_task_block = new TaskBlock();
 
 				if($block_type == 'text'){
@@ -207,118 +229,118 @@ if (!function_exists('create_blocks')){
 }
 
 if (!function_exists('get_blocks')){
-	function get_blocks($target_id, $opertion_type){
+	function get_blocks($target_id, $operation_type){
 		$blocks = [];
 
-		if($opertion_type == 'lesson'){
-            $lesson_blocks = LessonBlock::where('lesson_id', $target_id)->get();
+		if($operation_type == 'lesson'){
+			$lesson_blocks = LessonBlock::where('lesson_id', $target_id)->get();
 
-            foreach ($lesson_blocks as $key => $lesson_block) {
-                if($lesson_block->lesson_block_type_id == 1){
-                    $text = LessonText::where('lesson_block_id', $lesson_block->lesson_block_id)
-                    ->first();
-                    if(isset($text)){
-                        $text_block = [
-                            'block_id' => $key + 1,
-                            'block_type_id' => $lesson_block->lesson_block_type_id,
-                            'content' => $text->content
-                        ];
-                        array_push($blocks, $text_block);
-                    }
-                }
-                
-                if($lesson_block->lesson_block_type_id == 2){
-                    $video = LessonVideo::leftJoin('media_files','lesson_videos.file_id','=','media_files.file_id')
-                    ->where('lesson_videos.lesson_block_id', $lesson_block->lesson_block_id)
-                    ->select(
-                        'media_files.file_type_id',
-                        'media_files.file_name',
-                        'media_files.file_id'
-                    )
-                    ->first();
-                    if(isset($video)){
-                        $video_block = [
-                            'block_id' => $key + 1,
-                            'file_type_id' => $video->file_type_id,
-                            'file_id' => $video->file_id,
-                            'file_name' => $video->file_name
-                        ];
-                        array_push($blocks, $video_block);
-                    }
-                }
-                
-                if($lesson_block->lesson_block_type_id == 3){
-                    $audio = LessonAudio::leftJoin('media_files','lesson_audios.file_id','=','media_files.file_id')
-                    ->where('lesson_audios.lesson_block_id', $lesson_block->lesson_block_id)
-                    ->select(
-                        'media_files.file_type_id',
-                        'media_files.file_name',
-                        'media_files.file_id'
-                    )
-                    ->first();
-                    if(isset($audio)){
-                        $audio_block = [
-                            'block_id' => $key + 1,
-                            'file_type_id' => $audio->file_type_id,
-                            'file_id' => $audio->file_id,
-                            'file_name' => $audio->file_name,
-                        ];
-                        array_push($blocks, $audio_block);
-                    }
-                }
-                
-                if($lesson_block->lesson_block_type_id == 4){
-                    $image = LessonImage::leftJoin('media_files','lesson_images.file_id','=','media_files.file_id')
-                    ->where('lesson_images.lesson_block_id', $lesson_block->lesson_block_id)
-                    ->select(
-                        'media_files.file_type_id',
-                        'media_files.file_name',
-                        'media_files.file_id',
-                        'lesson_images.image_width'
-                    )
-                    ->first();
-                    if(isset($image)){
-                        $image_block = [
-                            'block_id' => $key + 1,
-                            'file_type_id' => $image->file_type_id,
-                            'file_id' => $image->file_id,
-                            'file_name' => $image->file_name,
-                            'image_width' => $image->image_width
-                        ];
-                        array_push($blocks, $image_block);
-                    }
-                }
+			foreach ($lesson_blocks as $key => $lesson_block) {
+				if($lesson_block->lesson_block_type_id == 1){
+					$text = LessonText::where('lesson_block_id', $lesson_block->lesson_block_id)
+					->first();
+					if(isset($text)){
+						$text_block = [
+							'block_id' => $key + 1,
+							'block_type_id' => $lesson_block->lesson_block_type_id,
+							'content' => $text->content
+						];
+						array_push($blocks, $text_block);
+					}
+				}
 
-                if($lesson_block->lesson_block_type_id == 5){
-                    $table = LessonTable::where('lesson_block_id', $lesson_block->lesson_block_id)
-                    ->first();
-                    if(isset($table)){
-                        $table_block = [
-                            'block_id' => $key + 1,
-                            'block_type_id' => $lesson_block->lesson_block_type_id,
-                            'content' => $table->content
-                        ];
-                        array_push($blocks, $table_block);
-                    }
-                }
+				if($lesson_block->lesson_block_type_id == 2){
+					$video = LessonVideo::leftJoin('media_files','lesson_videos.file_id','=','media_files.file_id')
+					->where('lesson_videos.lesson_block_id', $lesson_block->lesson_block_id)
+					->select(
+						'media_files.file_type_id',
+						'media_files.file_name',
+						'media_files.file_id'
+					)
+					->first();
+					if(isset($video)){
+						$video_block = [
+							'block_id' => $key + 1,
+							'file_type_id' => $video->file_type_id,
+							'file_id' => $video->file_id,
+							'file_name' => $video->file_name
+						];
+						array_push($blocks, $video_block);
+					}
+				}
 
-                if($lesson_block->lesson_block_type_id == 6){
-                    $code = LessonCode::where('lesson_block_id', $lesson_block->lesson_block_id)
-                    ->first();
-                    if(isset($code)){
-                        $code_block = [
-                            'block_id' => $key + 1,
-                            'block_type_id' => $lesson_block->lesson_block_type_id,
-                            'code' => $code->code,
-                            'code_language' => $code->code_language,
-                            'code_theme' => $code->code_theme
-                        ];
-                        array_push($blocks, $code_block);
-                    }
-                }
-            }
+				if($lesson_block->lesson_block_type_id == 3){
+					$audio = LessonAudio::leftJoin('media_files','lesson_audios.file_id','=','media_files.file_id')
+					->where('lesson_audios.lesson_block_id', $lesson_block->lesson_block_id)
+					->select(
+						'media_files.file_type_id',
+						'media_files.file_name',
+						'media_files.file_id'
+					)
+					->first();
+					if(isset($audio)){
+						$audio_block = [
+							'block_id' => $key + 1,
+							'file_type_id' => $audio->file_type_id,
+							'file_id' => $audio->file_id,
+							'file_name' => $audio->file_name,
+						];
+						array_push($blocks, $audio_block);
+					}
+				}
+
+				if($lesson_block->lesson_block_type_id == 4){
+					$image = LessonImage::leftJoin('media_files','lesson_images.file_id','=','media_files.file_id')
+					->where('lesson_images.lesson_block_id', $lesson_block->lesson_block_id)
+					->select(
+						'media_files.file_type_id',
+						'media_files.file_name',
+						'media_files.file_id',
+						'lesson_images.image_width'
+					)
+					->first();
+					if(isset($image)){
+						$image_block = [
+							'block_id' => $key + 1,
+							'file_type_id' => $image->file_type_id,
+							'file_id' => $image->file_id,
+							'file_name' => $image->file_name,
+							'image_width' => $image->image_width
+						];
+						array_push($blocks, $image_block);
+					}
+				}
+
+				if($lesson_block->lesson_block_type_id == 5){
+					$table = LessonTable::where('lesson_block_id', $lesson_block->lesson_block_id)
+					->first();
+					if(isset($table)){
+						$table_block = [
+							'block_id' => $key + 1,
+							'block_type_id' => $lesson_block->lesson_block_type_id,
+							'content' => $table->content
+						];
+						array_push($blocks, $table_block);
+					}
+				}
+
+				if($lesson_block->lesson_block_type_id == 6){
+					$code = LessonCode::where('lesson_block_id', $lesson_block->lesson_block_id)
+					->first();
+					if(isset($code)){
+						$code_block = [
+							'block_id' => $key + 1,
+							'block_type_id' => $lesson_block->lesson_block_type_id,
+							'code' => $code->code,
+							'code_language' => $code->code_language,
+							'code_theme' => $code->code_theme
+						];
+						array_push($blocks, $code_block);
+					}
+				}
+			}
 		}
-		elseif($opertion_type == 'task'){
+		elseif($operation_type == 'task'){
 			$task_blocks = TaskBlock::where('task_id', $target_id)->get();
 
 			foreach ($task_blocks as $key => $task_block) {

@@ -16,7 +16,6 @@ class CheckSubdomain
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next){
-
         $origin = parse_url($request->header('Origin'));
         $host = $origin['host'];
         $parts = explode('.', $host);
