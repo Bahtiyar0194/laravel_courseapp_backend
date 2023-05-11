@@ -11,7 +11,11 @@ use App\Models\UserRole;
 use App\Models\Language;
 use App\Models\CourseLevelType;
 use App\Models\CourseSkill;
+use App\Models\CourseSuitable;
+use App\Models\CourseRequirement;
+use App\Models\CourseReview;
 use App\Models\UploadConfiguration;
+use Iman\Streamer\VideoStreamer;
 
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
@@ -200,150 +204,236 @@ class CourseController extends Controller{
             $skills = CourseSkill::where('course_id', '=', $course->course_id)
             ->get();
 
+            $suitables = CourseSuitable::where('course_id', '=', $course->course_id)
+            ->get();
+
+            $requirements = CourseRequirement::where('course_id', '=', $course->course_id)
+            ->get();
+
+            $reviews = CourseReview::leftJoin('users','course_reviews.user_id','=','users.user_id')
+            ->where('course_reviews.course_id', '=', $course->course_id)
+            ->select(
+                'course_reviews.id',
+                'users.last_name',
+                'users.first_name',
+                'course_reviews.rating',
+                'course_reviews.review',
+                'course_reviews.created_at',
+            )
+            ->get();
+
             $course->subscribers = $subscribers;
             $course->skills = $skills;
+            $course->suitables = $suitables;
+            $course->requirements = $requirements;
+            $course->reviews = $reviews;
+            $course->reviewers_count = count($reviews);
 
-            return response()->json($course, 200);
-        }
-        else{
-            return response()->json('Course not found', 404);
+            $rating = 0;
+
+            if(count($reviews) > 0){
+             $rating = $reviews->sum('rating') / count($reviews);
+         }
+
+         $course->rating = $rating;
+
+         return response()->json($course, 200);
+     }
+     else{
+        return response()->json('Course not found', 404);
+    }
+}
+
+public function create(Request $request){
+
+    $poster_max_file_size = UploadConfiguration::where('file_type_id', '=', 3)
+    ->first()->max_file_size_mb;
+
+    $trailer_max_file_size = UploadConfiguration::where('file_type_id', '=', 1)
+    ->first()->max_file_size_mb;
+
+    $school_id = auth()->user()->school_id;
+
+    $validator = Validator::make($request->all(), [
+        'course_name' => 'required|string|between:3, 300',
+        'course_description' => 'required|string|max:1000',
+        'course_content' => 'required|string|max:10000',
+        'course_category_id' => 'required',
+        'course_lang_id' => 'required',
+        'level_type_id' => 'required|numeric',
+        'author_id' => 'required|numeric',
+        'course_poster_file' => 'required|file|mimes:jpg,png,jpeg,gif,svg|max_mb:'.$poster_max_file_size,
+        'course_trailer_file' => 'nullable|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$trailer_max_file_size,
+        'course_free' => 'required',
+        'course_cost' => 'nullable|required_if:course_free,false|numeric|min:1',
+    ]);
+
+    if($validator->fails()){
+        return $this->json('error', 'Course create error', 422, $validator->errors());
+    }
+
+    if($request->course_free == 'false'){
+        $course_cost = $request->course_cost;
+    }
+    else{
+        $course_cost = 0;
+    }
+
+    $new_course = new Course();
+    $new_course->course_name = $request->course_name;
+    $new_course->course_description = $request->course_description;
+    $new_course->course_content = $request->course_content;
+    $new_course->course_poster_file = $poster_file_name;
+    $new_course->course_trailer_file = $trailer_file_name;
+    $new_course->course_category_id = $request->course_category_id;
+    $new_course->school_id = $school_id;
+    $new_course->author_id = $request->author_id;
+    $new_course->course_lang_id = $request->course_lang_id;
+    $new_course->level_type_id = $request->level_type_id;
+    $new_course->course_cost = $course_cost;
+    $new_course->save();
+
+
+    if(isset($request->course_poster_file)){
+        $file = $request->file('course_poster_file');
+        $poster_file_name = $file->hashName();
+        $file->storeAs('schools/'.$school_id.'/course_posters/'.$new_course->course_id.'/', $poster_file_name);
+    }
+    else{
+        $poster_file_name = 'default.svg';
+    }
+
+    if(isset($request->course_trailer_file)){
+        $file = $request->file('course_trailer_file');
+        $trailer_file_name = $file->hashName();
+        $file->storeAs('schools/'.$school_id.'/course_trailers/'.$new_course->course_id.'/', $trailer_file_name);
+    }
+    else{
+        $trailer_file_name = null;
+    }
+
+    $course_skills = json_decode($request->course_skills);
+
+    if(count($course_skills) > 0){
+        foreach ($course_skills as $key => $skill) {
+            $new_skill = new CourseSkill();
+            $new_skill->course_id = $new_course->course_id;
+            $new_skill->skill_name = $skill->item_value;
+            $new_skill->save();
         }
     }
 
-    public function create(Request $request){
+    $course_suitables = json_decode($request->course_suitables);
 
-        $poster_max_file_size = UploadConfiguration::where('file_type_id', '=', 3)
-        ->first()->max_file_size_mb;
+    if(count($course_suitables) > 0){
+        foreach ($course_suitables as $key => $suitable) {
+            $new_suitable = new CourseSuitable();
+            $new_suitable->course_id = $new_course->course_id;
+            $new_suitable->suitable_name = $suitable->item_value;
+            $new_suitable->save();
+        }
+    }
 
-        $trailer_max_file_size = UploadConfiguration::where('file_type_id', '=', 1)
-        ->first()->max_file_size_mb;
+    $course_requirements = json_decode($request->course_requirements);
 
-        $school_id = auth()->user()->school_id;
+    if(count($course_requirements) > 0){
+        foreach ($course_requirements as $key => $requirement) {
+            $new_requirement = new CourseRequirement();
+            $new_requirement->course_id = $new_course->course_id;
+            $new_requirement->requirement_name = $requirement->item_value;
+            $new_requirement->save();
+        }
+    }
 
+    $user_operation = new UserOperation();
+    $user_operation->operator_id = auth()->user()->user_id;
+    $user_operation->operation_type_id = 3;
+    $user_operation->save();
+
+    if($request->author_id != auth()->user()->user_id){
+        $new_user_course = new UserCourse();
+        $new_user_course->operator_id = auth()->user()->user_id;
+        $new_user_course->recipient_id = $request->author_id;
+        $new_user_course->course_id = $new_course->course_id;
+        $new_user_course->cost = 0;
+        $new_user_course->subscribe_type_id = 2;
+        $new_user_course->save();
+    }
+
+    $new_user_course = new UserCourse();
+    $new_user_course->operator_id = auth()->user()->user_id;
+    $new_user_course->recipient_id = auth()->user()->user_id;
+    $new_user_course->course_id = $new_course->course_id;
+    $new_user_course->cost = 0;
+    $new_user_course->subscribe_type_id = 4;
+    $new_user_course->save();
+
+    return $this->json('success', 'Course create successful', 200, $new_course);
+}
+
+
+public function free_subscribe(Request $request){
+    $find_course = Course::where('course_id', '=', $request->course_id)
+    ->where('school_id', '=', auth()->user()->school_id)
+    ->first();
+
+    if(isset($find_course)){
+        if($find_course->course_cost == 0){
+            $new_user_course = new UserCourse();
+            $new_user_course->operator_id = auth()->user()->user_id;
+            $new_user_course->recipient_id = auth()->user()->user_id;
+            $new_user_course->course_id = $request->course_id;
+            $new_user_course->cost = $find_course->course_cost;
+            $new_user_course->subscribe_type_id = 1;
+            $new_user_course->save();
+
+            return response()->json('Subscribe success', 200);
+        }
+        else{
+            return response()->json('Access denied', 403);
+        }
+    }
+    else{
+        return response()->json('Course not found', 404);
+    }
+}
+
+
+public function create_review(Request $request){
+
+    $find_user_course = UserCourse::where('course_id', '=', $request->course_id)
+    ->where('recipient_id', '=', auth()->user()->user_id)
+    ->first();
+
+    if(isset($find_user_course)){
         $validator = Validator::make($request->all(), [
-            'course_name' => 'required|string|between:3, 300',
-            'course_description' => 'required|string|max:1000',
-            'course_content' => 'required|string|max:10000',
-            'course_category_id' => 'required',
-            'course_lang_id' => 'required',
-            'level_type_id' => 'required|numeric',
-            'author_id' => 'required|numeric',
-            'course_poster_file' => 'nullable|file|mimes:jpg,png,jpeg,gif,svg|max_mb:'.$poster_max_file_size,
-            'course_trailer_file' => 'nullable|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$trailer_max_file_size,
-            'course_free' => 'required',
-            'course_cost' => 'nullable|required_if:course_free,false|numeric|min:1',
+            'rating' => 'required|numeric|between:1, 5',
+            'review' => 'nullable|string|min:10|max:1000'
         ]);
 
         if($validator->fails()){
             return $this->json('error', 'Course create error', 422, $validator->errors());
         }
 
-        if($request->course_free == 'false'){
-            $course_cost = $request->course_cost;
-        }
-        else{
-            $course_cost = 0;
-        }
+        $new_review = new CourseReview();
+        $new_review->course_id = $request->course_id;
+        $new_review->user_id = auth()->user()->user_id;
+        $new_review->rating = $request->rating;
+        $new_review->review = $request->review;
+        $new_review->save();
 
-        if(isset($request->course_poster_file)){
-            $file = $request->file('course_poster_file');
-            $poster_file_name = $file->hashName();
-            $file->storeAs('/course_posters/', $poster_file_name);
-        }
-        else{
-            $poster_file_name = 'default.svg';
-        }
-
-        if(isset($request->course_trailer_file)){
-            $file = $request->file('course_trailer_file');
-            $trailer_file_name = $file->hashName();
-            $file->storeAs('/course_trailers/', $trailer_file_name);
-        }
-        else{
-            $trailer_file_name = null;
-        }
-        
-        $new_course = new Course();
-        $new_course->course_name = $request->course_name;
-        $new_course->course_description = $request->course_description;
-        $new_course->course_content = $request->course_content;
-        $new_course->course_poster_file = $poster_file_name;
-        $new_course->course_trailer_file = $trailer_file_name;
-        $new_course->course_category_id = $request->course_category_id;
-        $new_course->school_id = $school_id;
-        $new_course->author_id = $request->author_id;
-        $new_course->course_lang_id = $request->course_lang_id;
-        $new_course->level_type_id = $request->level_type_id;
-        $new_course->course_cost = $course_cost;
-        $new_course->save();
-
-        $course_skills = json_decode($request->course_skills);
-
-        if(count($course_skills) > 0){
-            foreach ($course_skills as $key => $skill) {
-                $new_skill = new CourseSkill();
-                $new_skill->course_id = $new_course->course_id;
-                $new_skill->skill_name = $skill->item_value;
-                $new_skill->save();
-            }
-        }
-
-        $user_operation = new UserOperation();
-        $user_operation->operator_id = auth()->user()->user_id;
-        $user_operation->operation_type_id = 3;
-        $user_operation->save();
-
-        if($request->author_id != auth()->user()->user_id){
-            $new_user_course = new UserCourse();
-            $new_user_course->operator_id = auth()->user()->user_id;
-            $new_user_course->recipient_id = $request->author_id;
-            $new_user_course->course_id = $new_course->course_id;
-            $new_user_course->cost = 0;
-            $new_user_course->subscribe_type_id = 2;
-            $new_user_course->save();
-        }
-
-        $new_user_course = new UserCourse();
-        $new_user_course->operator_id = auth()->user()->user_id;
-        $new_user_course->recipient_id = auth()->user()->user_id;
-        $new_user_course->course_id = $new_course->course_id;
-        $new_user_course->cost = 0;
-        $new_user_course->subscribe_type_id = 4;
-        $new_user_course->save();
-
-        return $this->json('success', 'Course create successful', 200, $new_course);
+        return $this->json('success', 'Review create successful', 200, $new_review);
     }
-
-
-    public function free_subscribe(Request $request){
-        $find_course = Course::where('course_id', '=', $request->course_id)
-        ->where('school_id', '=', auth()->user()->school_id)
-        ->first();
-
-        if(isset($find_course)){
-            if($find_course->course_cost == 0){
-                $new_user_course = new UserCourse();
-                $new_user_course->operator_id = auth()->user()->user_id;
-                $new_user_course->recipient_id = auth()->user()->user_id;
-                $new_user_course->course_id = $request->course_id;
-                $new_user_course->cost = $find_course->course_cost;
-                $new_user_course->subscribe_type_id = 1;
-                $new_user_course->save();
-
-                return response()->json('Subscribe success', 200);
-            }
-            else{
-                return response()->json('Access denied', 403);
-            }
-        }
-        else{
-            return response()->json('Course not found', 404);
-        }
+    else{
+        return response()->json('User course not found', 404);
     }
+}
 
+public function poster($file_name){
+    $course = Course::where('course_poster_file', '=', $file_name)->first();
 
-    public function poster($file_name){
-        $path = storage_path('/app/course_posters/'.$file_name);
+    if(isset($course)){
+        $path = storage_path('/app/schools/'.$course->school_id.'/course_posters/'.$course->course_id.'/'.$file_name);
 
         if (!File::exists($path)) {
             return response()->json('Poster not found', 404);
@@ -356,4 +446,26 @@ class CourseController extends Controller{
         $response->header("Content-Type", $type);
         return $response;
     }
+    else{
+        return response()->json('Poster not found', 404);
+    }
+}
+
+public function trailer($file_name){
+    $course = Course::where('course_trailer_file', '=', $file_name)->first();
+
+    if(isset($course)){
+        $path = storage_path('/app/schools/'.$course->school_id.'/course_trailers/'.$course->course_id.'/'.$file_name);
+
+        if (!File::exists($path)) {
+            return response()->json('Trailer not found', 404);
+        }
+
+        $response = VideoStreamer::streamFile($path);
+        return $response;
+    }
+    else{
+        return response()->json('Trailer not found', 404);
+    }
+}
 }

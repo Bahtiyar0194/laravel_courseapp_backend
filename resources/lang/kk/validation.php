@@ -191,6 +191,7 @@ return [
         'author_id'             => 'Курстың авторы',
         'course_cost'           => 'Курстың бағасы',
         'course_poster'         => 'Курстың мұқабасы',
+        'review'                => 'Пікір',
 
         'lesson_name'           => 'Сабақтың атауы',
         'lesson_description'    => 'Сабақтың қысқаша сипаттамасы',

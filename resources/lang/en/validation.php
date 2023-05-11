@@ -181,6 +181,7 @@ return [
         'author_id'             => 'course author',
         'course_cost'           => 'course cost',
         'course_poster'         => 'course poster',
+        'review'                => 'review',
 
         'file_name'             => 'file name',
         'video_name'            => 'video name',

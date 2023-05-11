@@ -207,6 +207,7 @@ return [
         'author_id'             => 'Автор курса',
         'course_cost'           => 'Стоимость курса',
         'course_poster'         => 'Обложка курса',
+        'review'                => 'Отзыв',
 
         'lesson_name'           => 'Название урока',
         'lesson_description'    => 'Описание урока',
