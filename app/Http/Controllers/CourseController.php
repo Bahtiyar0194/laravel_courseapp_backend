@@ -36,8 +36,8 @@ class CourseController extends Controller{
         $categories = CourseCategory::leftJoin('course_categories_lang', 'course_categories.course_category_id', '=', 'course_categories_lang.course_category_id')
         ->leftJoin('languages', 'course_categories_lang.lang_id', '=', 'languages.lang_id')
         ->select(
-         'course_categories.course_category_id',
-         'course_categories_lang.course_category_name')
+           'course_categories.course_category_id',
+           'course_categories_lang.course_category_name')
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->orderBy('course_categories.course_category_id')
         ->get();
@@ -156,13 +156,18 @@ class CourseController extends Controller{
             'courses.course_poster_file',
             'courses.course_trailer_file',
             'courses.course_cost',
+            'courses.course_category_id',
+            'courses.course_lang_id',
+            'courses.level_type_id',
+            'courses.author_id',
             'courses.created_at',
             'course_categories_lang.course_category_name',
             'languages_lang.lang_name',
             'types_of_course_level.level_type_id',
             'types_of_course_level_lang.level_type_name',
             'users.last_name',
-            'users.first_name'
+            'users.first_name',
+            'users.avatar'
         )
         ->where('courses.school_id', auth()->user()->school_id)
         ->where('courses.course_id', $request->course_id)
@@ -214,13 +219,24 @@ class CourseController extends Controller{
             ->where('course_reviews.course_id', '=', $course->course_id)
             ->select(
                 'course_reviews.id',
+                'users.user_id',
                 'users.last_name',
                 'users.first_name',
+                'users.avatar',
                 'course_reviews.rating',
                 'course_reviews.review',
                 'course_reviews.created_at',
             )
             ->get();
+
+            $my_review = false;
+
+            foreach ($reviews as $key => $review) {
+                if($review->user_id == auth()->user()->user_id){
+                    $my_review = true;
+                    break;
+                }
+            }
 
             $course->subscribers = $subscribers;
             $course->skills = $skills;
@@ -228,18 +244,19 @@ class CourseController extends Controller{
             $course->requirements = $requirements;
             $course->reviews = $reviews;
             $course->reviewers_count = count($reviews);
+            $course->my_review = $my_review;
 
             $rating = 0;
 
             if(count($reviews) > 0){
-             $rating = $reviews->sum('rating') / count($reviews);
-         }
+               $rating = $reviews->sum('rating') / count($reviews);
+           }
 
-         $course->rating = $rating;
+           $course->rating = $rating;
 
-         return response()->json($course, 200);
-     }
-     else{
+           return response()->json($course, 200);
+       }
+       else{
         return response()->json('Course not found', 404);
     }
 }
@@ -258,8 +275,8 @@ public function create(Request $request){
         'course_name' => 'required|string|between:3, 300',
         'course_description' => 'required|string|max:1000',
         'course_content' => 'required|string|max:10000',
-        'course_category_id' => 'required',
-        'course_lang_id' => 'required',
+        'course_category_id' => 'required|numeric',
+        'course_lang_id' => 'required|numeric',
         'level_type_id' => 'required|numeric',
         'author_id' => 'required|numeric',
         'course_poster_file' => 'required|file|mimes:jpg,png,jpeg,gif,svg|max_mb:'.$poster_max_file_size,
@@ -279,6 +296,16 @@ public function create(Request $request){
         $course_cost = 0;
     }
 
+    if(isset($request->course_poster_file)){
+        $poster_file = $request->file('course_poster_file');
+        $poster_file_name = $poster_file->hashName();
+    }
+
+    if(isset($request->course_trailer_file)){
+        $trailer_file = $request->file('course_trailer_file');
+        $trailer_file_name = $trailer_file->hashName();
+    }
+
     $new_course = new Course();
     $new_course->course_name = $request->course_name;
     $new_course->course_description = $request->course_description;
@@ -295,21 +322,11 @@ public function create(Request $request){
 
 
     if(isset($request->course_poster_file)){
-        $file = $request->file('course_poster_file');
-        $poster_file_name = $file->hashName();
-        $file->storeAs('schools/'.$school_id.'/course_posters/'.$new_course->course_id.'/', $poster_file_name);
-    }
-    else{
-        $poster_file_name = 'default.svg';
+        $poster_file->storeAs('schools/'.$school_id.'/course_posters/'.$new_course->course_id.'/', $poster_file_name);
     }
 
     if(isset($request->course_trailer_file)){
-        $file = $request->file('course_trailer_file');
-        $trailer_file_name = $file->hashName();
-        $file->storeAs('schools/'.$school_id.'/course_trailers/'.$new_course->course_id.'/', $trailer_file_name);
-    }
-    else{
-        $trailer_file_name = null;
+        $trailer_file->storeAs('schools/'.$school_id.'/course_trailers/'.$new_course->course_id.'/', $trailer_file_name);
     }
 
     $course_skills = json_decode($request->course_skills);
@@ -318,7 +335,7 @@ public function create(Request $request){
         foreach ($course_skills as $key => $skill) {
             $new_skill = new CourseSkill();
             $new_skill->course_id = $new_course->course_id;
-            $new_skill->skill_name = $skill->item_value;
+            $new_skill->item_value = $skill->item_value;
             $new_skill->save();
         }
     }
@@ -329,7 +346,7 @@ public function create(Request $request){
         foreach ($course_suitables as $key => $suitable) {
             $new_suitable = new CourseSuitable();
             $new_suitable->course_id = $new_course->course_id;
-            $new_suitable->suitable_name = $suitable->item_value;
+            $new_suitable->item_value = $suitable->item_value;
             $new_suitable->save();
         }
     }
@@ -340,7 +357,7 @@ public function create(Request $request){
         foreach ($course_requirements as $key => $requirement) {
             $new_requirement = new CourseRequirement();
             $new_requirement->course_id = $new_course->course_id;
-            $new_requirement->requirement_name = $requirement->item_value;
+            $new_requirement->item_value = $requirement->item_value;
             $new_requirement->save();
         }
     }
@@ -371,6 +388,155 @@ public function create(Request $request){
     return $this->json('success', 'Course create successful', 200, $new_course);
 }
 
+public function update(Request $request){
+
+    $poster_max_file_size = UploadConfiguration::where('file_type_id', '=', 3)
+    ->first()->max_file_size_mb;
+
+    $trailer_max_file_size = UploadConfiguration::where('file_type_id', '=', 1)
+    ->first()->max_file_size_mb;
+
+    $school_id = auth()->user()->school_id;
+
+    $validator = Validator::make($request->all(), [
+        'course_name' => 'required|string|between:3, 300',
+        'course_description' => 'required|string|max:1000',
+        'course_content' => 'required|string|max:10000',
+        'course_category_id' => 'required|numeric',
+        'course_lang_id' => 'required|numeric',
+        'level_type_id' => 'required|numeric',
+        'author_id' => 'required|numeric',
+        'old_course_poster' => 'required',
+        'new_course_poster_file' => 'nullable|required_if:old_course_poster,false|file|mimes:jpg,png,jpeg,gif,svg|max_mb:'.$poster_max_file_size,
+        'old_course_trailer' => 'required',
+        'new_course_trailer_file' => 'nullable|file|mimes:mp4,ogx,oga,ogv,ogg,webm|max_mb:'.$trailer_max_file_size,
+        'course_free' => 'required',
+        'course_cost' => 'nullable|required_if:course_free,false|numeric|min:1'
+    ]);
+
+    if($validator->fails()){
+        return $this->json('error', 'Course create error', 422, $validator->errors());
+    }
+
+    if($request->course_free == 'false'){
+        $course_cost = $request->course_cost;
+    }
+    else{
+        $course_cost = 0;
+    }
+
+    $edit_course = Course::where('course_id', '=', $request->course_id)
+    ->where('school_id', '=', $school_id)
+    ->first();
+
+    if(!isset($edit_course)){
+        return response()->json('Course not found', 404);
+    }
+
+    if(isset($request->new_course_poster_file)){
+        $poster_file = $request->file('new_course_poster_file');
+        $poster_file_name = $poster_file->hashName();
+
+        if(isset($edit_course->course_poster_file)){
+            $path = storage_path('/app/schools/'.$school_id.'/course_posters/'.$edit_course->course_id.'/'.$edit_course->course_poster_file);
+            File::delete($path);
+        }
+    }
+    else{
+        $poster_file_name = $edit_course->course_poster_file;
+    }
+
+    if(isset($request->new_course_trailer_file)){
+        $trailer_file = $request->file('new_course_trailer_file');
+        $trailer_file_name = $trailer_file->hashName();
+
+        if(isset($edit_course->course_trailer_file)){
+            $path = storage_path('/app/schools/'.$school_id.'/course_trailers/'.$edit_course->course_id.'/'.$edit_course->course_trailer_file);
+            File::delete($path);
+        }
+    }
+    else{
+        if($request->old_course_trailer == 'false'){
+            $path = storage_path('/app/schools/'.$school_id.'/course_trailers/'.$edit_course->course_id.'/'.$edit_course->course_trailer_file);
+            File::delete($path);
+            
+            $trailer_file_name = null;
+        }
+        else{
+            $trailer_file_name = $edit_course->course_trailer_file;
+        }
+    }
+
+    $edit_course->course_name = $request->course_name;
+    $edit_course->course_description = $request->course_description;
+    $edit_course->course_content = $request->course_content;
+    $edit_course->course_poster_file = $poster_file_name;
+    $edit_course->course_trailer_file = $trailer_file_name;
+    $edit_course->course_category_id = $request->course_category_id;
+    $edit_course->school_id = $school_id;
+    $edit_course->author_id = $request->author_id;
+    $edit_course->course_lang_id = $request->course_lang_id;
+    $edit_course->level_type_id = $request->level_type_id;
+    $edit_course->course_cost = $course_cost;
+    $edit_course->save();
+
+    if(isset($request->new_course_poster_file)){
+        $poster_file->storeAs('schools/'.$school_id.'/course_posters/'.$edit_course->course_id.'/', $poster_file_name);
+    }
+
+    if(isset($request->new_course_trailer_file)){
+        $trailer_file->storeAs('schools/'.$school_id.'/course_trailers/'.$edit_course->course_id.'/', $trailer_file_name);
+    }
+
+    $course_skills = json_decode($request->course_skills);
+
+    CourseSkill::where('course_id', '=', $edit_course->course_id)
+    ->delete();
+
+    if(count($course_skills) > 0){
+        foreach ($course_skills as $key => $skill) {
+            $new_skill = new CourseSkill();
+            $new_skill->course_id = $edit_course->course_id;
+            $new_skill->item_value = $skill->item_value;
+            $new_skill->save();
+        }
+    }
+
+    $course_suitables = json_decode($request->course_suitables);
+
+    CourseSuitable::where('course_id', '=', $edit_course->course_id)
+    ->delete();
+
+    if(count($course_suitables) > 0){
+        foreach ($course_suitables as $key => $suitable) {
+            $new_suitable = new CourseSuitable();
+            $new_suitable->course_id = $edit_course->course_id;
+            $new_suitable->item_value = $suitable->item_value;
+            $new_suitable->save();
+        }
+    }
+
+    $course_requirements = json_decode($request->course_requirements);
+
+    CourseRequirement::where('course_id', '=', $edit_course->course_id)
+    ->delete();
+
+    if(count($course_requirements) > 0){
+        foreach ($course_requirements as $key => $requirement) {
+            $new_requirement = new CourseRequirement();
+            $new_requirement->course_id = $edit_course->course_id;
+            $new_requirement->item_value = $requirement->item_value;
+            $new_requirement->save();
+        }
+    }
+
+    $user_operation = new UserOperation();
+    $user_operation->operator_id = auth()->user()->user_id;
+    $user_operation->operation_type_id = 16;
+    $user_operation->save();
+
+    return $this->json('success', 'Course update successful', 200, $edit_course);
+}
 
 public function free_subscribe(Request $request){
     $find_course = Course::where('course_id', '=', $request->course_id)

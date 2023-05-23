@@ -9,5 +9,5 @@ class CourseRequirement extends Model
 {
     use HasFactory;
     protected $table = 'course_requirements';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'item_id';
 }

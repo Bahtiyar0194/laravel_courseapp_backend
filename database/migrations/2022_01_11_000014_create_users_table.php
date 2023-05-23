@@ -20,6 +20,8 @@ class CreateUsersTable extends Migration
             $table->string('email');
             $table->string('phone');
             $table->float('wallet')->default(0);
+            $table->string('avatar')->nullable();
+            $table->text('about_me')->nullable();
             $table->integer('school_id')->unsigned();
             $table->foreign('school_id')->references('school_id')->on('schools')->onDelete('cascade');
             $table->integer('current_role_id')->unsigned();

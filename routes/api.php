@@ -40,10 +40,15 @@ Route::group([
         Route::post('/activate_user/{hash}', [AuthController::class, 'activate_user']);
         Route::post('/forgot_password', [AuthController::class, 'forgot_password']);
         Route::post('/password_recovery', [AuthController::class, 'password_recovery']);
+        Route::get('/get_avatar/{avatar_file}', [AuthController::class, 'get_avatar']);
 
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/me', [AuthController::class, 'me']);
             Route::post('/change_mode/{role_type_id}', [AuthController::class, 'change_mode']);
+            Route::post('/update', [AuthController::class, 'update']);
+            Route::post('/upload_avatar', [AuthController::class, 'upload_avatar']);
+            Route::post('/delete_avatar', [AuthController::class, 'delete_avatar']);
+            Route::post('/change_password', [AuthController::class, 'change_password']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
     });
@@ -52,6 +57,14 @@ Route::group([
         'prefix' => 'school'
     ], function ($router) {
         Route::get('/get', [SchoolController::class, 'get_school'])->middleware('check_subdomain');
+        Route::get('/get_logo/{logo_file}/{logo_variable}', [SchoolController::class, 'get_logo']);
+
+        Route::group(['middleware' => ['auth:sanctum']], function () {
+            Route::get('/get_attributes', [SchoolController::class, 'get_school_attributes']);
+            Route::post('/set_attributes', [SchoolController::class, 'set_school_attributes']);
+            Route::post('/upload_logo', [SchoolController::class, 'upload_logo']);
+            Route::post('/delete_logo/{logo_variable}', [SchoolController::class, 'delete_logo']);
+        });
     });
 
     Route::group([
@@ -80,8 +93,8 @@ Route::group([
             Route::post('/get', [UserController::class, 'get_users']);
             Route::get('/get/{user_id}', [UserController::class, 'get_user']);
             Route::get('/get_roles', [UserController::class, 'get_roles']);
-            Route::post('/invite', [UserController::class, 'invite_user']); 
-            Route::post('/update/{user_id}', [UserController::class, 'update_user']);
+            Route::post('/invite', [UserController::class, 'invite_user'])->middleware('check_roles'); 
+            Route::post('/update/{user_id}', [UserController::class, 'update_user'])->middleware('check_roles');
         });
     });
 
@@ -123,6 +136,7 @@ Route::group([
             Route::get('/my-courses/{course_id}', [CourseController::class, 'course']);
             Route::post('/free_subscribe/{course_id}', [CourseController::class, 'free_subscribe']);
             Route::post('/create', [CourseController::class, 'create'])->middleware('check_roles');
+            Route::post('/update/{course_id}', [CourseController::class, 'update'])->middleware('check_roles');
             Route::post('/create_review/{course_id}', [CourseController::class, 'create_review']);
         });
     });
@@ -130,25 +144,25 @@ Route::group([
     Route::group([
         'prefix' => 'lessons'
     ], function ($router){
-       Route::group(['middleware' => ['auth:sanctum']], function () {
-           Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
-           Route::post('/update/{lesson_id}', [LessonController::class, 'edit'])->middleware('check_roles');
-           Route::post('/delete/{lesson_id}', [LessonController::class, 'delete'])->middleware('check_roles');
-           Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
-           Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
-           Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
-       });
-   });
+     Route::group(['middleware' => ['auth:sanctum']], function () {
+         Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
+         Route::post('/update/{lesson_id}', [LessonController::class, 'edit'])->middleware('check_roles');
+         Route::post('/delete/{lesson_id}', [LessonController::class, 'delete'])->middleware('check_roles');
+         Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
+         Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
+         Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
+     });
+ });
 
     Route::group([
         'prefix' => 'tasks'
     ], function ($router){
         Route::group(['middleware' => ['auth:sanctum']], function () {
-           Route::get('/{task_id}', [TaskController::class, 'get_task']);
-           Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
-           Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
-           Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
-           Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
-       });
+         Route::get('/{task_id}', [TaskController::class, 'get_task']);
+         Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
+         Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
+         Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
+         Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
+     });
     });
 });

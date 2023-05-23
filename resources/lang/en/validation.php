@@ -84,7 +84,7 @@ return [
     ],
 
     // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
-    'max_mb' => 'The :attribute may not be greater than :max_mb megabytes.',
+    'max_mb' => 'The file may not be greater than :max_mb megabytes.',
 
     'mimes' => 'The file of type must be a format: :values.',
     'mimetypes' => 'The file of type must be a format: :values.',
@@ -175,12 +175,13 @@ return [
         'course_name'           => 'course name',
         'course_description'    => 'course description',
         'course_content'        => 'course content',
-        'course_category_id'    => 'course category',
-        'course_lang_id'        => 'course language',
-        'level_type_id'         => 'course level',
-        'author_id'             => 'course author',
-        'course_cost'           => 'course cost',
-        'course_poster'         => 'course poster',
+        'course_category_id'     => 'course category',
+        'course_lang_id'         => 'course language',
+        'level_type_id'          => 'course level',
+        'author_id'              => 'course author',
+        'course_cost'            => 'course cost',
+        'course_poster_file'     => 'course poster',
+        'new_course_poster_file' => 'course poster',
         'review'                => 'review',
 
         'file_name'             => 'file name',

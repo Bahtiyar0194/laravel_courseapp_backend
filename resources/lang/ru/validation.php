@@ -206,7 +206,8 @@ return [
         'level_type_id'         => 'Уровень прохождения курса',
         'author_id'             => 'Автор курса',
         'course_cost'           => 'Стоимость курса',
-        'course_poster'         => 'Обложка курса',
+        'course_poster_file'    => 'Обложка курса',
+        'new_course_poster_file'    => 'Обложка курса',
         'review'                => 'Отзыв',
 
         'lesson_name'           => 'Название урока',

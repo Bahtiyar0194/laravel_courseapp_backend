@@ -14,10 +14,10 @@ class CreateCourseRequirementsTable extends Migration
     public function up()
     {
         Schema::create('course_requirements', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('item_id');
+            $table->string('item_value');
             $table->integer('course_id')->unsigned();
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
-            $table->string('requirement_name');
             $table->timestamps();
         });
     }

@@ -83,7 +83,7 @@ return [
     ],
 
     // Эта кастомная валидация создана в Аpp/Providers/AppServiceProvider.php 
-    'max_mb' => ':attribute :max_mb мегабайттан көп болмауы керек.',
+    'max_mb' => 'Файлдың өлшемі :max_mb мегабайттан аспауы керек.',
 
     'mimes'                => 'Файлдың түрі: :values болуы керек.',
     'mimetypes'            => 'Файлдың түрі: :values болуы керек.',
@@ -190,7 +190,8 @@ return [
         'level_type_id'         => 'Курстың өту деңгейі',
         'author_id'             => 'Курстың авторы',
         'course_cost'           => 'Курстың бағасы',
-        'course_poster'         => 'Курстың мұқабасы',
+        'course_poster_file'    => 'Курстың мұқабасы',
+        'new_course_poster_file'    => 'Курстың мұқабасы',
         'review'                => 'Пікір',
 
         'lesson_name'           => 'Сабақтың атауы',

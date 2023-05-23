@@ -18,7 +18,7 @@ class CreateCoursesTable extends Migration
             $table->string('course_name');
             $table->text('course_description');
             $table->text('course_content');
-            $table->string('course_poster_file')->default('default.svg');
+            $table->string('course_poster_file')->nullable();
             $table->string('course_trailer_file')->nullable();
             $table->integer('course_category_id')->unsigned();
             $table->foreign('course_category_id')->references('course_category_id')->on('course_categories');

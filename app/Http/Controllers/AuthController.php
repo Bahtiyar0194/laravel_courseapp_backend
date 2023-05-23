@@ -8,6 +8,7 @@ use App\Models\School;
 use App\Models\UserOperation;
 use App\Models\Language;
 use App\Models\PasswordRecovery;
+use App\Models\UploadConfiguration;
 
 use Mail;
 use App\Mail\PasswordRecoveryMail;
@@ -17,6 +18,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Illuminate\Support\Facades\Response;
+use File;
+use Hash;
 
 class AuthController extends Controller
 {
@@ -113,21 +117,21 @@ class AuthController extends Controller
             $user_operation->save();
         }
         elseif($request->first_registration == 'false'){
-           $user_role = new UserRole();
-           $user_role->user_id = $user->user_id;
-           $user_role->role_type_id = 4;
-           $user_role->save();
-       }
+         $user_role = new UserRole();
+         $user_role->user_id = $user->user_id;
+         $user_role->role_type_id = 4;
+         $user_role->save();
+     }
 
-       $user_operation = new UserOperation();
-       $user_operation->operator_id = $user->user_id;
-       $user_operation->operation_type_id = 1;
-       $user_operation->save();
+     $user_operation = new UserOperation();
+     $user_operation->operator_id = $user->user_id;
+     $user_operation->operation_type_id = 1;
+     $user_operation->save();
 
-       return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
-   }
+     return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
+ }
 
-   public function login(Request $request){
+ public function login(Request $request){
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
         'password' => 'required',
@@ -141,7 +145,7 @@ class AuthController extends Controller
     $getSchool = School::where('school_domain', $request->school_domain)->first();
 
     if(!isset($getSchool)){
-        return $this->json('error', 'Login error', 401, ['school_domain' => trans('auth.school_not_found')]);
+        return $this->json('error', 'Login error', 422, ['school_domain' => trans('auth.school_not_found')]);
     }
 
     $getSchoolUser = User::where('email', $request->email)
@@ -262,8 +266,8 @@ public function password_recovery(Request $request){
     $validator = Validator::make($request->all(), [
         'school_domain' => 'required',
         'recovery_code' => 'required|size:8',
-        'password' => 'min:6',
-        'password_confirmation' => 'min:6|required_with:password|same:password'
+        'password' => 'required|min:6',
+        'password_confirmation' => 'required|same:password|min:6'
     ]);
 
     if($validator->fails()) {
@@ -273,7 +277,7 @@ public function password_recovery(Request $request){
     $getSchool = School::where('school_domain', $request->school_domain)->first();
 
     if(!isset($getSchool)){
-        return $this->json('error', 'Recovery password error', 401, ['school_domain' => trans('auth.school_not_found')]);
+        return $this->json('error', 'Recovery password error', 422, ['school_domain' => trans('auth.school_not_found')]);
     }
 
     $get_password_recovery = PasswordRecovery::leftJoin('users', 'password_recovery.user_id', '=', 'users.user_id')
@@ -337,14 +341,119 @@ public function me(Request $request){
     ], 200);
 }
 
+public function update(Request $request){
+    $validator = Validator::make($request->all(), [
+        'first_name' => 'required|string|between:2,100',
+        'last_name' => 'required|string|between:2,100',
+        'email' => 'required|string|email|max:100',
+        'phone' => 'required|regex:/^((?!_).)*$/s',
+        'about_me' => 'nullable|string|min:10|max:2000'
+    ]);
+
+    if($validator->fails()){
+        return response()->json($validator->errors(), 422);
+    }
+
+    $user = auth()->user();
+
+    if($user->email != $request->email){
+        $find_email = User::where('school_id', '=', auth()->user()->school_id)
+        ->where('email', '=', $request->email)
+        ->first();
+
+        if(isset($find_email)){
+            $email_error = ['email' => trans('auth.user_already_exists')];
+            return response()->json($email_error, 422);
+        }
+    }
+    
+    $user->first_name = $request->first_name;
+    $user->last_name = $request->last_name;
+    $user->email = $request->email;
+    $user->phone = $request->phone;
+    $user->about_me = $request->about_me;
+    $user->save();
+
+    return response()->json([
+        'user' => $user
+    ], 200);
+}
+
+public function get_avatar(Request $request){
+    $user = User::where('avatar', '=', $request->avatar_file)
+    ->first();
+
+    $path = storage_path('/app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$user->avatar);
+
+    if (!File::exists($path)) {
+        return response()->json('Image not found', 404);
+    }
+
+    $file = File::get($path);
+    $type = File::mimeType($path);
+
+    $response = Response::make($file, 200);
+    $response->header("Content-Type", $type);
+
+    return $response;
+}
+
+public function upload_avatar(Request $request){
+    $file_type_id = 3;
+    $max_image_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
+    ->first()->max_file_size_mb;
+
+    $validator = Validator::make($request->all(), [
+        'image_file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size
+    ]);
+
+    if($validator->fails()){
+        return response()->json($validator->errors(), 422);
+    }
+
+    $user = auth()->user();
+
+    if(isset($user->avatar)){
+        $path = storage_path('/app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$user->avatar);
+        File::delete($path);
+    }
+
+    $file = $request->file('image_file');
+    $file_target = $file->hashName();
+    $file->storeAs('schools/'.$user->school_id.'/avatars/'.$user->user_id.'/', $file_target);
+    
+    $user->avatar = $file_target;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Upload avatar successful'
+    ], 200);
+}
+
+public function delete_avatar(Request $request){
+    $user = auth()->user();
+
+    if(isset($user->avatar)){
+        $path = storage_path('/app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$user->avatar);
+        File::delete($path);
+    }
+    
+    $user->avatar = null;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Delete avatar successful'
+    ], 200);
+}
+
 public function change_mode(Request $request){
-   $user = auth()->user();
-   $role_found = false;
+ $user = auth()->user();
+ $role_found = false;
 
-   $roles = UserRole::where('user_id', $user->user_id)
-   ->select('role_type_id')->get();
+ $roles = UserRole::where('user_id', $user->user_id)
+ ->select('role_type_id')->get();
 
-   foreach ($roles as $key => $value) {
+ foreach ($roles as $key => $value) {
     if($value->role_type_id == $request->role_type_id){
         $role_found = true;
         break;
@@ -359,8 +468,33 @@ if($role_found === true){
     return response()->json('User mode change successful', 200);
 }
 else{
-   return response()->json('Access denied', 403);
+ return response()->json('Access denied', 403);
 }
+}
+
+public function change_password(Request $request){
+    $validator = Validator::make($request->all(), [
+        'current_password' => 'required',
+        'password' => 'required|min:6',
+        'password_confirmation' => 'required|same:password|min:6'
+    ]);
+
+    if($validator->fails()) {
+        return $this->json('error', 'Change password error', 422, $validator->errors());
+    }
+
+    $user = auth()->user();
+
+    if(!(Hash::check($request->current_password, $user->password))){
+        return $this->json('error', 'Change password error', 422, [
+            'current_password' => 'Неправильный текущий пароль'
+        ]);
+    }
+
+    $user->password = bcrypt($request->password);
+    $user->save();
+
+    return $this->json('success', 'Change password successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
 }
 
 public function logout(){

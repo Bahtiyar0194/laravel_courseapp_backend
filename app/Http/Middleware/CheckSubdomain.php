@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\School;
+use App\Models\Color;
+use App\Models\Font;
 
 class CheckSubdomain
 {
@@ -22,9 +24,14 @@ class CheckSubdomain
 
         if(count($parts) >= 2){
             $subdomain = $parts[0];
-            $school = School::where('school_domain', $subdomain)->first();
+            $school = School::where('school_domain', $subdomain)
+            ->first();
 
             if(isset($school)){
+                $school->title_font_class = Font::where('font_id', '=', $school->title_font_id)->first()->font_class.'_title';
+                $school->body_font_class = Font::where('font_id', '=', $school->body_font_id)->first()->font_class.'_body';
+                $school->color_scheme_class = Color::where('color_id', '=', $school->color_id)->first()->color_class;
+
                 return response()->json($school, 200);
             }
             else{

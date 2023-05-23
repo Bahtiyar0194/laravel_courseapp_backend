@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CourseSuitable extends Model
+class Theme extends Model
 {
     use HasFactory;
-    protected $table = 'course_suitables';
-    protected $primaryKey = 'item_id';
+    protected $table = 'themes';
+    protected $primaryKey = 'theme_id';
 }
