@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GroupController;
 use App\Http\Controllers\CourseCategoryController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\TaskController;
@@ -62,6 +63,7 @@ Route::group([
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/get_attributes', [SchoolController::class, 'get_school_attributes']);
             Route::post('/set_attributes', [SchoolController::class, 'set_school_attributes']);
+            Route::post('/update', [SchoolController::class, 'update']);
             Route::post('/upload_logo', [SchoolController::class, 'upload_logo']);
             Route::post('/delete_logo/{logo_variable}', [SchoolController::class, 'delete_logo']);
         });
@@ -95,6 +97,16 @@ Route::group([
             Route::get('/get_roles', [UserController::class, 'get_roles']);
             Route::post('/invite', [UserController::class, 'invite_user'])->middleware('check_roles'); 
             Route::post('/update/{user_id}', [UserController::class, 'update_user'])->middleware('check_roles');
+        });
+    });
+
+    Route::group([
+        'prefix' => 'groups'
+    ], function ($router) {
+        Route::group(['middleware' => ['auth:sanctum']], function () {
+            Route::get('/get_group_attributes', [GroupController::class, 'get_group_attributes']);
+            Route::post('/get', [GroupController::class, 'get_groups']);
+            Route::post('/create', [GroupController::class, 'create'])->middleware('check_roles');
         });
     });
 

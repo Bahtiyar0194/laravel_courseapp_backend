@@ -155,6 +155,12 @@ return [
         ],
         'roles_count' => [
             'min' => 'The number of user roles must be at least :min',
+        ],
+        'members_count' => [
+            'min' => 'Add members to the group',
+        ],
+        'mentor_id' => [
+            'required' => 'Choose a mentor',
         ]
     ],
 
@@ -175,12 +181,12 @@ return [
         'course_name'           => 'course name',
         'course_description'    => 'course description',
         'course_content'        => 'course content',
-        'course_category_id'     => 'course category',
-        'course_lang_id'         => 'course language',
-        'level_type_id'          => 'course level',
-        'author_id'              => 'course author',
-        'course_cost'            => 'course cost',
-        'course_poster_file'     => 'course poster',
+        'course_category_id'    => 'course category',
+        'course_lang_id'        => 'course language',
+        'level_type_id'         => 'course level',
+        'author_id'             => 'course author',
+        'course_cost'           => 'course cost',
+        'course_poster_file'    => 'course poster',
         'new_course_poster_file' => 'course poster',
         'review'                => 'review',
 
@@ -193,6 +199,8 @@ return [
 
         'task_name'             => 'Task name',
         'task_description'      => 'Task description',
+
+        'group_name'            => 'Group name',
     ],
 
 ];

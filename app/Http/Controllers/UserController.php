@@ -51,6 +51,7 @@ class UserController extends Controller{
             'users.last_name',
             'users.email',
             'users.phone',
+            'users.avatar',
             'users.created_at',
             'types_of_status_lang.status_type_name'
         )

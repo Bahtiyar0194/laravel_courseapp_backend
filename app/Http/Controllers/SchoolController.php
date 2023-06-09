@@ -86,6 +86,43 @@ class SchoolController extends Controller{
         return response()->json($set_school, 200);
     }
 
+    public function update(Request $request){
+        $validator = Validator::make($request->all(), [
+            'school_name' => 'required|string',
+            'about' => 'nullable',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|regex:/^((?!_).)*$/s',
+            'instagram' => 'nullable|url',
+            'facebook' => 'nullable|url',
+            'tiktok' => 'nullable|url',
+            'instagram' => 'nullable|url',
+            'whatsapp' => 'nullable|regex:/^((?!_).)*$/s',
+            'telegram' => 'nullable|url',
+            'youtube' => 'nullable|url'
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Update school error', 422, $validator->errors());
+        }
+
+        $school = School::find(auth()->user()->school_id);
+        $school->school_name = $request->school_name;
+        $school->about = $request->about;
+        $school->email = $request->email;
+        $school->phone = $request->phone;
+        $school->instagram = $request->instagram;
+        $school->facebook = $request->facebook;
+        $school->tiktok = $request->tiktok;
+        $school->whatsapp = $request->whatsapp;
+        $school->telegram = $request->telegram;
+        $school->youtube = $request->youtube;
+        $school->save();
+
+        return response()->json([
+            'school' => $school
+        ], 200);
+    }
+
     public function get_logo(Request $request){
         if($request->logo_variable == 'light_logo'){
             $school = School::where('light_theme_logo', '=', $request->logo_file)
@@ -179,7 +216,7 @@ class SchoolController extends Controller{
             $path = storage_path('/app/schools/'.$school->school_id.'/logos/'.$school_logo);
             File::delete($path);
         }
-        
+
         $school->save();
 
         return response()->json([
