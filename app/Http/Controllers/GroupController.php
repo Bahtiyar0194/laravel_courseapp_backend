@@ -43,6 +43,7 @@ class GroupController extends Controller
             'users.created_at'
         )
         ->where('users.school_id', '=', auth()->user()->school_id)
+        ->where('users.status_type_id', '!=', 2)
         ->orderBy('users.created_at', 'desc')
         ->get();
 
@@ -97,6 +98,34 @@ class GroupController extends Controller
         return response()->json($groups->paginate($per_page)->onEachSide(1), 200);
     }
 
+    public function get_group(Request $request){
+        $group = Group::leftJoin('users', 'groups.mentor_id', '=', 'users.user_id')
+        ->leftJoin('schools', 'schools.school_id', '=', 'users.school_id')
+        ->select(
+            'groups.group_id',
+            'groups.group_name',
+            'groups.group_description',
+            'groups.mentor_id'
+        )
+        ->where('groups.group_id', '=', $request->group_id)
+        ->where('users.school_id', '=', auth()->user()->school_id)
+        ->first();
+
+        $members = GroupMember::where('group_id', '=', $request->group_id)
+        ->select('member_id')
+        ->get();
+
+        $group_members = [];
+
+        foreach ($members as $key => $value) {
+            array_push($group_members, $value->member_id);
+        }
+
+        $group->group_members = $group_members;
+
+        return response()->json($group, 200);
+    }
+
     public function create(Request $request){
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|between:3, 300',
@@ -126,5 +155,39 @@ class GroupController extends Controller
         }
 
         return $this->json('success', 'Group create successful', 200, $new_group);
+    }
+
+    public function update(Request $request){
+        $validator = Validator::make($request->all(), [
+            'group_name' => 'required|string|between:3, 300',
+            'mentor_id' => 'required|numeric',
+            'members_count' => 'required|numeric|min:1'
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Group update error', 422, $validator->errors());
+        }
+
+        $edit_group = Group::find($request->group_id);
+        $edit_group->mentor_id = $request->mentor_id;
+        $edit_group->group_name = $request->group_name;
+        $edit_group->group_description = $request->group_description;
+        $edit_group->save();
+
+        GroupMember::where('group_id', '=', $edit_group->group_id)
+        ->delete();
+
+        $group_members = json_decode($request->members);
+
+        if(count($group_members) > 0){
+            foreach ($group_members as $key => $member) {
+                $new_member = new GroupMember();
+                $new_member->group_id = $edit_group->group_id;
+                $new_member->member_id = $member;
+                $new_member->save();
+            }
+        }
+
+        return $this->json('success', 'Group update successful', 200, $edit_group);
     }
 }

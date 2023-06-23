@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeMail extends Mailable
+class CourseInvitationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -18,6 +18,7 @@ class WelcomeMail extends Mailable
      *
      * @return void
      */
+
     public function __construct($mail_body){
         $this->mail_body = $mail_body;
     }
@@ -27,8 +28,8 @@ class WelcomeMail extends Mailable
      *
      * @return $this
      */
-    public function build()
-    {
-        return $this->subject($this->mail_body->subject)->markdown('emails.welcome')->with('mail_body', $this->mail_body);
+
+    public function build(){
+        return $this->subject($this->mail_body->subject)->markdown('emails.course_invitation')->with('mail_body', $this->mail_body);
     }
 }

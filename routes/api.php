@@ -39,6 +39,7 @@ Route::group([
         Route::post('/register', [AuthController::class, 'register']);
         Route::get('/get_activation_user/{hash}', [AuthController::class, 'get_activation_user']);
         Route::post('/activate_user/{hash}', [AuthController::class, 'activate_user']);
+        Route::post('/accept_invitation/{hash}', [AuthController::class, 'accept_invitation']);
         Route::post('/forgot_password', [AuthController::class, 'forgot_password']);
         Route::post('/password_recovery', [AuthController::class, 'password_recovery']);
         Route::get('/get_avatar/{avatar_file}', [AuthController::class, 'get_avatar']);
@@ -107,6 +108,8 @@ Route::group([
             Route::get('/get_group_attributes', [GroupController::class, 'get_group_attributes']);
             Route::post('/get', [GroupController::class, 'get_groups']);
             Route::post('/create', [GroupController::class, 'create'])->middleware('check_roles');
+            Route::get('/get/{group_id}', [GroupController::class, 'get_group']);
+            Route::post('/update/{group_id}', [GroupController::class, 'update'])->middleware('check_roles');
         });
     });
 
@@ -140,6 +143,7 @@ Route::group([
     ], function ($router) {
         Route::get('/images/posters/{filename}', [CourseController::class, 'poster']);
         Route::get('/videos/trailers/{filename}', [CourseController::class, 'trailer']);
+        Route::get('/get_invitation/{hash}', [CourseController::class, 'get_invitation']);
 
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/get_course_attributes', [CourseController::class, 'get_course_attributes']);
@@ -147,6 +151,11 @@ Route::group([
             Route::get('/my-courses', [CourseController::class, 'my_courses']);
             Route::get('/my-courses/{course_id}', [CourseController::class, 'course']);
             Route::post('/free_subscribe/{course_id}', [CourseController::class, 'free_subscribe']);
+            Route::post('/get_subscribers/{course_id}', [CourseController::class, 'get_subscribers']);
+            Route::post('/get_invites/{course_id}', [CourseController::class, 'get_invites']);
+            Route::post('/invite_subscriber/{course_id}', [CourseController::class, 'invite_subscriber'])->middleware('check_roles');
+            Route::post('/get_requests/{course_id}', [CourseController::class, 'get_requests']);
+            Route::post('/accept_request/{request_id}', [CourseController::class, 'accept_request'])->middleware('check_roles');
             Route::post('/create', [CourseController::class, 'create'])->middleware('check_roles');
             Route::post('/update/{course_id}', [CourseController::class, 'update'])->middleware('check_roles');
             Route::post('/create_review/{course_id}', [CourseController::class, 'create_review']);
@@ -173,6 +182,7 @@ Route::group([
          Route::get('/{task_id}', [TaskController::class, 'get_task']);
          Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
          Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
+         Route::post('/create_answer/{task_id}', [TaskController::class, 'create_answer'])->middleware('check_roles');
          Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
          Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
      });

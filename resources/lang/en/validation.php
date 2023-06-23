@@ -156,11 +156,17 @@ return [
         'roles_count' => [
             'min' => 'The number of user roles must be at least :min',
         ],
+        'course_mentors_count' => [
+            'min' => 'Add mentors to this course',
+        ],
         'members_count' => [
             'min' => 'Add members to the group',
         ],
         'mentor_id' => [
             'required' => 'Choose a mentor',
+        ],
+        'task_answer' => [
+            'required' => 'Give an answer to the task',
         ]
     ],
 

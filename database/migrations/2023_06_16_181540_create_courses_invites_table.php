@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUsersCoursesTable extends Migration
+class CreateCoursesInvitesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,19 +13,19 @@ class CreateUsersCoursesTable extends Migration
      */
     public function up()
     {
-        Schema::create('users_courses', function (Blueprint $table) {
+        Schema::create('courses_invites', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('operator_id')->unsigned();
-            $table->foreign('operator_id')->references('user_id')->on('users')->onDelete('cascade');
-            $table->integer('recipient_id')->unsigned();
-            $table->foreign('recipient_id')->references('user_id')->on('users')->onDelete('cascade');
-            $table->integer('mentor_id')->unsigned();
-            $table->foreign('mentor_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->string('subscriber_email');
+            $table->string('url_hash');
             $table->integer('course_id')->unsigned();
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
-            $table->float('cost')->default(0);
-            $table->integer('subscribe_type_id')->unsigned();
-            $table->foreign('subscribe_type_id')->references('subscribe_type_id')->on('types_of_course_subscribes');
+            $table->integer('operator_id')->unsigned();
+            $table->foreign('operator_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->integer('mentor_id')->unsigned();
+            $table->foreign('mentor_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->float('course_cost')->default(0);
+            $table->integer('status_type_id')->default(4)->unsigned();
+            $table->foreign('status_type_id')->references('status_type_id')->on('types_of_status');
             $table->timestamps();
         });
     }
@@ -37,6 +37,6 @@ class CreateUsersCoursesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users_courses');
+        Schema::dropIfExists('courses_invites');
     }
 }

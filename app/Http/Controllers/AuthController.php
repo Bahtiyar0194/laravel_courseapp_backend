@@ -9,6 +9,8 @@ use App\Models\UserOperation;
 use App\Models\Language;
 use App\Models\PasswordRecovery;
 use App\Models\UploadConfiguration;
+use App\Models\CourseInvite;
+use App\Models\UserCourse;
 
 use Mail;
 use App\Mail\PasswordRecoveryMail;
@@ -117,21 +119,99 @@ class AuthController extends Controller
             $user_operation->save();
         }
         elseif($request->first_registration == 'false'){
-         $user_role = new UserRole();
-         $user_role->user_id = $user->user_id;
-         $user_role->role_type_id = 4;
-         $user_role->save();
-     }
+           $user_role = new UserRole();
+           $user_role->user_id = $user->user_id;
+           $user_role->role_type_id = 4;
+           $user_role->save();
+       }
 
-     $user_operation = new UserOperation();
-     $user_operation->operator_id = $user->user_id;
-     $user_operation->operation_type_id = 1;
-     $user_operation->save();
+       $user_operation = new UserOperation();
+       $user_operation->operator_id = $user->user_id;
+       $user_operation->operation_type_id = 1;
+       $user_operation->save();
 
-     return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
- }
+       return $this->json('success', 'Registration successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
+   }
 
- public function login(Request $request){
+   public function accept_invitation(Request $request){
+    $validator = Validator::make($request->all(), [
+        'first_name' => 'required|string|between:2,100',
+        'last_name' => 'required|string|between:2,100',
+        'email' => 'required|string|email|max:100',
+        'phone' => 'required|regex:/^((?!_).)*$/s',
+        'password' => 'required|string|min:6'
+    ]);
+
+    if($validator->fails()){
+        return $this->json('error', 'Accept invitation error', 422, $validator->errors());
+    }
+
+    $invitation = CourseInvite::leftJoin('courses','courses.course_id','=','courses_invites.course_id')
+    ->select(
+        'courses_invites.id as invite_id',
+        'courses_invites.operator_id',
+        'courses_invites.mentor_id',
+        'courses_invites.course_cost',
+        'courses_invites.subscriber_email',
+        'courses_invites.course_id',
+        'courses.course_name',
+        'courses.school_id'
+    )
+    ->where('courses_invites.url_hash', '=', $request->hash)
+    ->where('courses_invites.status_type_id', '=', 4)
+    ->first();
+
+    if(isset($invitation)){
+        $getSchoolUser = User::where('email', $request->email)
+        ->where('school_id', $invitation->school_id)
+        ->first();
+
+        if(isset($getSchoolUser)){
+            return $this->json('error', 'Accept invitation error', 422, ['email' => trans('auth.user_already_exists')]);
+        }
+
+        $user = new User();
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->school_id = $invitation->school_id;
+        $user->password = bcrypt($request->password);
+        $user->current_role_id = 4;
+        $user->save();
+
+        $user_role = new UserRole();
+        $user_role->user_id = $user->user_id;
+        $user_role->role_type_id = 4;
+        $user_role->save();
+
+        $user_operation = new UserOperation();
+        $user_operation->operator_id = $user->user_id;
+        $user_operation->operation_type_id = 1;
+        $user_operation->save();
+
+        $save_invitation = CourseInvite::find($invitation->invite_id);
+        $save_invitation->status_type_id = 11;
+        $save_invitation->subscriber_email = $request->email;
+        $save_invitation->save();
+
+        $new_user_course = new UserCourse();
+        $new_user_course->operator_id = $invitation->operator_id;
+        $new_user_course->recipient_id = $user->user_id;
+        $new_user_course->mentor_id = $invitation->mentor_id;
+        $new_user_course->course_id = $invitation->course_id;
+        $new_user_course->cost = $invitation->course_cost;
+        $new_user_course->subscribe_type_id = 6;
+        $new_user_course->save();
+
+        return $this->json('success', 'Accept invitation successful', 200, ['token' => $user->createToken('API Token')->plainTextToken]);
+    }
+    else{
+        return response()->json('Invitation not found', 404);
+    }
+}
+
+public function login(Request $request){
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
         'password' => 'required',
@@ -447,13 +527,13 @@ public function delete_avatar(Request $request){
 }
 
 public function change_mode(Request $request){
- $user = auth()->user();
- $role_found = false;
+   $user = auth()->user();
+   $role_found = false;
 
- $roles = UserRole::where('user_id', $user->user_id)
- ->select('role_type_id')->get();
+   $roles = UserRole::where('user_id', $user->user_id)
+   ->select('role_type_id')->get();
 
- foreach ($roles as $key => $value) {
+   foreach ($roles as $key => $value) {
     if($value->role_type_id == $request->role_type_id){
         $role_found = true;
         break;
@@ -468,7 +548,7 @@ if($role_found === true){
     return response()->json('User mode change successful', 200);
 }
 else{
- return response()->json('Access denied', 403);
+   return response()->json('Access denied', 403);
 }
 }
 

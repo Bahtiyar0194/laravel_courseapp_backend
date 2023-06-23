@@ -17,6 +17,8 @@ use App\Models\TaskImage;
 use App\Models\TaskVideo;
 use App\Models\TaskAudio;
 
+use App\Models\CompletedTask;
+
 use App\Traits\ApiResponser;
 use App\Http\Controllers\Controller;
 use Validator;
@@ -160,6 +162,26 @@ class TaskController extends Controller{
 
     }
 
+
+    public function create_answer(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'task_answer' => 'required|string|between:3, 3000',
+            'operation_type_id' => 'required'
+        ]);
+
+        if($validator->fails()){
+            return $this->json('error', 'Task answer create error', 422, $validator->errors());
+        }
+
+        $completed_task = new CompletedTask();
+        $completed_task->task_id = $request->task_id;
+        $completed_task->executor_id = auth()->user()->user_id;
+        $completed_task->answer = $request->task_answer;
+        $completed_task->save();
+
+        return $this->json('success', 'Task answer create success', 200, 'success');
+    }
 
 
     public function get_test_question(Request $request){
