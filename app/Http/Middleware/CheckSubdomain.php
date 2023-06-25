@@ -22,6 +22,8 @@ class CheckSubdomain
         $host = $origin['host'];
         $parts = explode('.', $host);
 
+        return response()->json($parts, 403);
+
         if(count($parts) >= 2){
             $subdomain = $parts[0];
             $school = School::where('school_domain', $subdomain)
