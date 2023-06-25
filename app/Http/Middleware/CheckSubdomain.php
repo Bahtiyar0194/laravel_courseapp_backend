@@ -22,9 +22,13 @@ class CheckSubdomain
         $host = $origin['host'];
         $parts = explode('.', $host);
 
-        return response()->json($parts, 403);
-
-        if(count($parts) >= 2){
+        if(count($parts) == 1 && $parts[0] == 'localhost'){
+            return response()->json('main', 200);
+        }
+        elseif(count($parts) == 2 && $parts[1] != 'localhost'){
+            return response()->json('main', 200);
+        }
+        else{
             $subdomain = $parts[0];
             $school = School::where('school_domain', $subdomain)
             ->first();
