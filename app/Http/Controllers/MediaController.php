@@ -176,7 +176,7 @@ class MediaController extends Controller{
             $host = $origin['host'];
             $parts = explode('.', $host);
 
-            if(count($parts) == 2){
+            if(count($parts) >= 2){
                 $subdomain = $parts[0];
                 $school = School::where('school_domain', $subdomain)->first();
 
@@ -285,7 +285,7 @@ class MediaController extends Controller{
             $host = $origin['host'];
             $parts = explode('.', $host);
 
-            if(count($parts) == 2){
+            if(count($parts) >= 2){
                 $subdomain = $parts[0];
                 $school = School::where('school_domain', $subdomain)->first();
 
@@ -401,7 +401,7 @@ class MediaController extends Controller{
             $host = $origin['host'];
             $parts = explode('.', $host);
 
-            if(count($parts) == 2){
+            if(count($parts) >= 2){
                 $subdomain = $parts[0];
                 $school = School::where('school_domain', $subdomain)->first();
 
