@@ -88,6 +88,8 @@ class AuthController extends Controller
         $user->phone = $request->phone;
         $user->school_id = $school->school_id;
         $user->password = bcrypt($request->password);
+        $user->status_type_id = 1;
+
         if($request->first_registration == 'true'){
             $user->current_role_id = 2;
         }
