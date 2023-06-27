@@ -87,7 +87,7 @@ class CourseController extends Controller{
         $attributes->course_categories = $categories;
         $attributes->course_languages = $languages;
         $attributes->course_levels = $levels;
-        $attributes->course_authors = $authors;
+        $attributes->course_authors = auth()->user()->school_id;
 
         return response()->json($attributes, 200);
     }
