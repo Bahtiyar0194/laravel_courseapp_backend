@@ -135,6 +135,9 @@ return [
     */
 
     'custom' => [
+        'school_domain' => [
+            'regex' => 'The domain must consist only of lowercase latin letters'
+        ],
         'video_file' => [
             'required_if' => 'Please, attach a video file',
         ],
