@@ -40,7 +40,7 @@ class AuthController extends Controller
             'phone' => 'required|regex:/^((?!_).)*$/s',
             'first_registration' => 'required',
             'school_name' => 'nullable|required_if:first_registration,true|string|between:2,100',
-            'school_domain' => 'nullable|required_if:first_registration,true|string|between:2,20|regex:/(([a-z]+)(\d+)?$)/u|unique:schools',
+            'school_domain' => 'nullable|required_if:first_registration,true|string|between:2,20|regex:/^[a-z]+$/u|unique:schools',
             'password' => 'required|string|min:6'
         ]);
 
