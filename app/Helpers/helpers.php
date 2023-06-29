@@ -24,6 +24,19 @@ use App\Models\SubscriptionPlan;
 use App\Models\MediaFile;
 use App\Models\School;
 
+// if (!function_exists('check_subomain')){
+// 	function check_subomain($full_domain){
+// 		$origin = parse_url($full_domain);
+// 		$host = str_replace(['.kz', '.ru', '.com', '.app'], '', $origin['host']);
+// 		$parts = explode('.', $host);
+// 		if(count($parts) >= 2){
+// 			return ['subdomain' => $parts[0]];
+// 		}
+		
+// 		return false;
+// 	}
+// }
+
 if (!function_exists('lack_of_disk_space')){
 	function lack_of_disk_space($file_size, $school_id){
 		$school = School::find($school_id);
