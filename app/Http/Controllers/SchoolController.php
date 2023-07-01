@@ -86,6 +86,80 @@ class SchoolController extends Controller{
         return response()->json($set_school, 200);
     }
 
+    public function get_manifest(Request $request){
+
+        $school = School::find($request->school_id);
+
+        if(isset($school)){
+            // {
+            //     "name": "WebTeach",
+            //     "short_name": "WebTeach",
+            //     "description": "Платформа для онлайн-обучения",
+            //     "theme_color": "#ffffff",
+            //     "background_color": "#ffffff",
+            //     "scope": "/",
+            //     "start_url": "/",
+            //     "display": "standalone",
+            //     "orientation": "portrait",
+            //     "icons": [
+            //         {
+            //             "src": "/android-icon-36x36.png",
+            //             "sizes": "36x36",
+            //             "type": "image/png"
+            //         },
+            //         {
+            //             "src": "/android-icon-48x48.png",
+            //             "sizes": "48x48",
+            //             "type": "image/png"
+            //         },
+            //         {
+            //             "src": "/android-icon-72x72.png",
+            //             "sizes": "72x72",
+            //             "type": "image/png"
+            //         },
+            //         {
+            //             "src": "/android-icon-96x96.png",
+            //             "sizes": "96x96",
+            //             "type": "image/png"
+            //         }, {
+            //             "src": "/android-icon-144x144.png",
+            //             "sizes": "144x144",
+            //             "type": "image/png"
+            //         }, {
+            //             "src": "/android-icon-192x192.png",
+            //             "sizes": "192x192",
+            //             "type": "image/png"
+            //         }
+            //     ]
+            // }
+
+            $manifest = new \stdClass();
+            $manifest->name = $school->school_domain;
+            $manifest->short_name = $school->school_name;
+            $manifest->description = $school->school_name;
+            $manifest->theme_color = '#ffffff';
+            $manifest->background_color = '#ffffff';
+            $manifest->scope = '/';
+            $manifest->start_url = '/';
+            $manifest->display = 'standalone';
+            $manifest->orientation = 'portrait';
+            $manifest->icons = [
+                "0" => [
+                    "src" => "/android-icon-36x36.png",
+                    "sizes" => "36x36",
+                    "type" => "image/png"
+                ],
+                "1" => [
+                    "src" => "/android-icon-48x48.png",
+                    "sizes" => "48x48",
+                    "type" => "image/png"
+                ]
+            ];
+
+            return response()->json($manifest, 200, [], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
+        }
+    }
+
     public function update(Request $request){
         $validator = Validator::make($request->all(), [
             'school_name' => 'required|string',
