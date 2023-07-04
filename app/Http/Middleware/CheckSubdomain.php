@@ -43,7 +43,7 @@ class CheckSubdomain
                 $base_url = url("/api/v1/school/get_favicon/".$school->school_id);
             }
             else{
-                $base_url = '';
+                $base_url = $request->header('Origin');
             }
 
             foreach ($icons as $key => $icon) {
