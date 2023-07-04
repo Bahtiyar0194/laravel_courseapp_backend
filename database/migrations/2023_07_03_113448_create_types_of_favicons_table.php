@@ -15,6 +15,7 @@ class CreateTypesOfFaviconsTable extends Migration
     {
         Schema::create('types_of_favicons', function (Blueprint $table) {
             $table->increments('icon_id');
+            $table->string('rel');
             $table->string('icon_name');
             $table->integer('size')->nullable();
             $table->timestamps();
