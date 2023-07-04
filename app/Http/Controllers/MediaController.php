@@ -151,7 +151,7 @@ class MediaController extends Controller{
 
             //App/Helpers
             if(lack_of_disk_space($media_file->size, $school_id)){
-                return $this->json('error', 'Image upload error', 422, ['lack_of_disk_space' => true]);
+                return $this->json('error', 'Video upload error', 422, ['lack_of_disk_space' => true]);
             }
 
             $file->storeAs('/schools/'.$school_id.'/videos/', $file_target);  
@@ -173,7 +173,7 @@ class MediaController extends Controller{
         $origin = parse_url($request->header('Referer'));
 
         if(isset($origin['host'])){
-            $host = $origin['host'];
+            $host = str_replace('www.', '', $origin['host']);
             $parts = explode('.', $host);
 
             if(count($parts) >= 2){
@@ -282,7 +282,7 @@ class MediaController extends Controller{
         $origin = parse_url($request->header('Referer'));
 
         if(isset($origin['host'])){
-            $host = $origin['host'];
+            $host = str_replace('www.', '', $origin['host']);
             $parts = explode('.', $host);
 
             if(count($parts) >= 2){
@@ -398,7 +398,7 @@ class MediaController extends Controller{
         $origin = parse_url($request->header('Referer'));
 
         if(isset($origin['host'])){
-            $host = $origin['host'];
+            $host = str_replace('www.', '', $origin['host']);
             $parts = explode('.', $host);
 
             if(count($parts) >= 2){

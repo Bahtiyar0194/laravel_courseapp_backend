@@ -23,6 +23,7 @@ use Validator;
 use Illuminate\Support\Facades\Response;
 use File;
 use Hash;
+use Image;
 
 class AuthController extends Controller
 {
@@ -502,7 +503,14 @@ public function upload_avatar(Request $request){
 
     $file = $request->file('image_file');
     $file_target = $file->hashName();
-    $file->storeAs('schools/'.$user->school_id.'/avatars/'.$user->user_id.'/', $file_target);
+
+    $img = Image::make($file);
+    
+    $img->resize(300, null, function ($constraint) {
+        $constraint->aspectRatio();
+    });
+
+    $img->save(storage_path('app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$file_target), 40);
     
     $user->avatar = $file_target;
     $user->save();

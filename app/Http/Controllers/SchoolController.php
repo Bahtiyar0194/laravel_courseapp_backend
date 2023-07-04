@@ -7,12 +7,14 @@ use App\Models\Color;
 use App\Models\Font;
 use App\Models\Theme;
 use App\Models\UploadConfiguration;
+use App\Models\FaviconType;
 
 use Illuminate\Http\Request;
 use App\Traits\ApiResponser;
 use Validator;
 use Illuminate\Support\Facades\Response;
 use File;
+use Image;
 
 class SchoolController extends Controller{
     use ApiResponser;
@@ -84,80 +86,6 @@ class SchoolController extends Controller{
         }
 
         return response()->json($set_school, 200);
-    }
-
-    public function get_manifest(Request $request){
-
-        $school = School::find($request->school_id);
-
-        if(isset($school)){
-            // {
-            //     "name": "WebTeach",
-            //     "short_name": "WebTeach",
-            //     "description": "Платформа для онлайн-обучения",
-            //     "theme_color": "#ffffff",
-            //     "background_color": "#ffffff",
-            //     "scope": "/",
-            //     "start_url": "/",
-            //     "display": "standalone",
-            //     "orientation": "portrait",
-            //     "icons": [
-            //         {
-            //             "src": "/android-icon-36x36.png",
-            //             "sizes": "36x36",
-            //             "type": "image/png"
-            //         },
-            //         {
-            //             "src": "/android-icon-48x48.png",
-            //             "sizes": "48x48",
-            //             "type": "image/png"
-            //         },
-            //         {
-            //             "src": "/android-icon-72x72.png",
-            //             "sizes": "72x72",
-            //             "type": "image/png"
-            //         },
-            //         {
-            //             "src": "/android-icon-96x96.png",
-            //             "sizes": "96x96",
-            //             "type": "image/png"
-            //         }, {
-            //             "src": "/android-icon-144x144.png",
-            //             "sizes": "144x144",
-            //             "type": "image/png"
-            //         }, {
-            //             "src": "/android-icon-192x192.png",
-            //             "sizes": "192x192",
-            //             "type": "image/png"
-            //         }
-            //     ]
-            // }
-
-            $manifest = new \stdClass();
-            $manifest->name = $school->school_domain;
-            $manifest->short_name = $school->school_name;
-            $manifest->description = $school->school_name;
-            $manifest->theme_color = '#ffffff';
-            $manifest->background_color = '#ffffff';
-            $manifest->scope = '/';
-            $manifest->start_url = '/';
-            $manifest->display = 'standalone';
-            $manifest->orientation = 'portrait';
-            $manifest->icons = [
-                "0" => [
-                    "src" => "/android-icon-36x36.png",
-                    "sizes" => "36x36",
-                    "type" => "image/png"
-                ],
-                "1" => [
-                    "src" => "/android-icon-48x48.png",
-                    "sizes" => "48x48",
-                    "type" => "image/png"
-                ]
-            ];
-
-            return response()->json($manifest, 200, [], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT);
-        }
     }
 
     public function update(Request $request){
@@ -272,11 +200,6 @@ class SchoolController extends Controller{
     public function delete_logo(Request $request){
         $school = School::find(auth()->user()->school_id);
 
-        if(isset($user->avatar)){
-            $path = storage_path('/app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$user->avatar);
-            File::delete($path);
-        }
-
         if($request->logo_variable == 'light_logo'){
             $school_logo = $school->light_theme_logo;
             $school->light_theme_logo = null;
@@ -295,6 +218,80 @@ class SchoolController extends Controller{
 
         return response()->json([
             'message' => 'Delete logo successful'
+        ], 200);
+    }
+
+    public function get_favicon(Request $request){
+
+        $path = storage_path('/app/schools/'.$request->school_id.'/favicons/'.$request->file_name);
+        
+        if (!File::exists($path)) {
+            return response()->json('Favicon not found', 404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        $response = Response::make($file, 200);
+        $response->header("Content-Type", $type);
+
+        return $response;
+    }
+
+
+    public function upload_favicon(Request $request){
+        $file_type_id = 3;
+        $max_image_file_size = UploadConfiguration::where('file_type_id', '=', $file_type_id)
+        ->first()->max_file_size_mb;
+
+        $validator = Validator::make($request->all(), [
+            'favicon_file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size.'|dimensions:width=192,height=192'
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors(), 422);
+        }
+
+        $school = School::find(auth()->user()->school_id);
+
+        $path = storage_path('/app/schools/'.$school->school_id.'/favicons');
+        File::deleteDirectory($path);
+        File::makeDirectory($path);
+
+        $file = $request->file('favicon_file');
+
+        $file_target = $file->hashName();
+        $file->storeAs('schools/'.$school->school_id.'/favicons/', $file_target);
+
+        $school->favicon = $file_target;
+
+        $icons = FaviconType::get();
+
+        foreach ($icons as $key => $icon) {
+            $img = Image::make($file)->resize($icon->size, $icon->size);
+            $img->save(storage_path('app/schools/'.$school->school_id.'/favicons/'.$icon->icon_name.'-'.$icon->size.'x'.$icon->size.'.png'), 80);
+        }
+
+        $school->save();
+
+        return response()->json([
+            'message' => 'Upload favicon successful'
+        ], 200);
+    }
+
+    public function delete_favicon(Request $request){
+        $school = School::find(auth()->user()->school_id);
+
+        if(isset($school->favicon)){
+            $path = storage_path('/app/schools/'.$school->school_id.'/favicons');
+            File::deleteDirectory($path);
+        }
+
+        $school->favicon = null;
+        $school->save();
+
+        return response()->json([
+            'message' => 'Delete favicon successful'
         ], 200);
     }
 }

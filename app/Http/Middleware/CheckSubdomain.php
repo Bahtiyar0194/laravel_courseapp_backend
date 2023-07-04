@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\Color;
 use App\Models\Font;
+use App\Models\FaviconType;
 
 class CheckSubdomain
 {
@@ -19,7 +20,7 @@ class CheckSubdomain
      */
     public function handle(Request $request, Closure $next){
         $origin = parse_url($request->header('Origin'));
-        $host = $origin['host'];
+        $host = str_replace('www.', '', $origin['host']);
         $parts = explode('.', $host);
 
         if(count($parts) == 1 && $parts[0] == 'localhost'){
@@ -33,10 +34,32 @@ class CheckSubdomain
             $school = School::where('school_domain', $subdomain)
             ->first();
 
+            $icons = FaviconType::where('icon_name', '=', 'android-icon')
+            ->get();
+
+            $manifest_icons = [];
+
+            if(isset($school->favicon)){
+                $base_url = url("/api/v1/school/get_favicon/".$school->school_id);
+            }
+            else{
+                $base_url = '';
+            }
+
+            foreach ($icons as $key => $icon) {
+                array_push($manifest_icons, [
+                    "src" => $base_url.'/android-icon-'.$icon['size'].'x'.$icon['size'].'.png',
+                    "sizes" => $icon['size'].'x'.$icon['size'],
+                    "type" => "image/png"
+                ]);
+            }
+
             if(isset($school)){
                 $school->title_font_class = Font::where('font_id', '=', $school->title_font_id)->first()->font_class.'_title';
                 $school->body_font_class = Font::where('font_id', '=', $school->body_font_id)->first()->font_class.'_body';
                 $school->color_scheme_class = Color::where('color_id', '=', $school->color_id)->first()->color_class;
+                $school->favicons = FaviconType::get();
+                $school->manifest_icons = $manifest_icons;
 
                 return response()->json($school, 200);
             }

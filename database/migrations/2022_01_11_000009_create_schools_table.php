@@ -28,6 +28,7 @@ class CreateSchoolsTable extends Migration
             $table->string('youtube')->nullable();
             $table->string('light_theme_logo')->nullable();
             $table->string('dark_theme_logo')->nullable();
+            $table->string('favicon')->nullable();
             $table->integer('theme_id')->unsigned()->default(1);
             $table->foreign('theme_id')->references('theme_id')->on('themes');
             $table->integer('color_id')->unsigned()->default(1);

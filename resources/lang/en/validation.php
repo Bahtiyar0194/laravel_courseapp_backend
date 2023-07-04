@@ -135,6 +135,9 @@ return [
     */
 
     'custom' => [
+        'favicon_file' => [
+            'dimensions' => 'The width and height of the icon should be 192x192 pixels'
+        ],
         'school_domain' => [
             'regex' => 'The domain must consist only of lowercase latin letters'
         ],
