@@ -31,7 +31,12 @@ class CheckSubdomain
         }
         else{
             $subdomain = $parts[0];
-            $school = School::where('school_domain', $subdomain)
+            $school = School::leftJoin('types_of_subscription_plans', 'types_of_subscription_plans.subscription_plan_id', '=', 'schools.subscription_plan_id')
+            ->select(
+                'schools.*',
+                'types_of_subscription_plans.subscription_plan_name'
+            )
+            ->where('school_domain', $subdomain)
             ->first();
 
             $icons = FaviconType::where('icon_name', '=', 'android-icon')

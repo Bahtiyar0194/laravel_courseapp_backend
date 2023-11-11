@@ -92,8 +92,13 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@webteach.app'),
-        'name' => env('MAIL_FROM_NAME', 'WebTeach'),
+        'address' => env('MAIL_FROM_ADDRESS', null),
+        'name' => env('MAIL_FROM_NAME', null),
+    ],
+
+
+    'contact' => [
+        'address' => env('MAIL_CONTACT_ADDRESS', null),
     ],
 
     /*

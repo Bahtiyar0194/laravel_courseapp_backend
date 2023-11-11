@@ -12,7 +12,6 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\MediaController;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

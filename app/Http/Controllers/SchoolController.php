@@ -33,7 +33,13 @@ class SchoolController extends Controller{
     public function get_school_attributes(Request $request){
         $attributes = new \stdClass();
 
-        $school = School::find(auth()->user()->school_id);
+        $school = School::leftJoin('types_of_subscription_plans', 'types_of_subscription_plans.subscription_plan_id', '=', 'schools.subscription_plan_id')
+        ->select(
+            'schools.*',
+            'types_of_subscription_plans.subscription_plan_name'
+        )
+        ->where('school_id', '=', auth()->user()->school_id)
+        ->first();
 
         $school->title_font_class = Font::where('font_id', '=', $school->title_font_id)->first()->font_class.'_title';
         $school->body_font_class = Font::where('font_id', '=', $school->body_font_id)->first()->font_class.'_body';
@@ -64,7 +70,13 @@ class SchoolController extends Controller{
             return $this->json('error', 'Set attributes error', 422, $validator->errors());
         }
 
-        $set_school = School::find(auth()->user()->school_id);
+        $set_school = School::leftJoin('types_of_subscription_plans', 'types_of_subscription_plans.subscription_plan_id', '=', 'schools.subscription_plan_id')
+        ->select(
+            'schools.*',
+            'types_of_subscription_plans.subscription_plan_name'
+        )
+        ->where('school_id', '=', auth()->user()->school_id)
+        ->first();
 
         if(isset($set_school)){
             $old_color_id = $set_school->color_id;
@@ -256,7 +268,7 @@ class SchoolController extends Controller{
 
         $path = storage_path('/app/schools/'.$school->school_id.'/favicons');
         File::deleteDirectory($path);
-        File::makeDirectory($path);
+        //File::makeDirectory($path);
 
         $file = $request->file('favicon_file');
 
