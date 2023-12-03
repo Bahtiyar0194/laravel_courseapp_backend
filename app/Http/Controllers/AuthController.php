@@ -13,6 +13,7 @@ use App\Models\CourseInvite;
 use App\Models\UserCourse;
 
 use Mail;
+use Storage;
 use App\Mail\PasswordRecoveryMail;
 
 use App\Traits\ApiResponser;
@@ -505,14 +506,16 @@ public function upload_avatar(Request $request){
     $file = $request->file('image_file');
     $file_target = $file->hashName();
 
-    $img = Image::make($file);
-    
-    $img->resize(300, null, function ($constraint) {
-        $constraint->aspectRatio();
-    });
+    // $img = Image::make($file)->resize(300, null, function ($constraint) {
+    //     $constraint->aspectRatio();
+    // })->stream('png', 20)->save(storage_path('app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$file_target));
 
-    $img->save(storage_path('app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$file_target), 40);
-    
+    $resized_image = Image::make($file)->resize(300, null, function ($constraint) {
+        $constraint->aspectRatio();
+    })->stream('png', 20);
+
+    Storage::disk('local')->put('/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$file_target, $resized_image);
+
     $user->avatar = $file_target;
     $user->save();
 
