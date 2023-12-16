@@ -45,8 +45,8 @@ class CourseController extends Controller{
         $categories = CourseCategory::leftJoin('course_categories_lang', 'course_categories.course_category_id', '=', 'course_categories_lang.course_category_id')
         ->leftJoin('languages', 'course_categories_lang.lang_id', '=', 'languages.lang_id')
         ->select(
-           'course_categories.course_category_id',
-           'course_categories_lang.course_category_name')
+         'course_categories.course_category_id',
+         'course_categories_lang.course_category_name')
         ->where('languages.lang_tag', $request->header('Accept-Language'))
         ->orderBy('course_categories.course_category_id')
         ->get();
@@ -238,8 +238,8 @@ class CourseController extends Controller{
             ->leftJoin('types_of_course_subscribes_lang', 'types_of_course_subscribes.subscribe_type_id', '=', 'types_of_course_subscribes_lang.subscribe_type_id')
             ->leftJoin('languages', 'types_of_course_subscribes_lang.lang_id', '=', 'languages.lang_id')
             ->select(
-               'types_of_course_subscribes.subscribe_type_id',
-               'types_of_course_subscribes_lang.subscribe_type_name')
+             'types_of_course_subscribes.subscribe_type_id',
+             'types_of_course_subscribes_lang.subscribe_type_name')
             ->where('languages.lang_tag', $request->header('Accept-Language'))
             ->orderBy('types_of_course_subscribes.subscribe_type_id')
             ->get();
@@ -296,14 +296,14 @@ class CourseController extends Controller{
             $rating = 0;
 
             if(count($reviews) > 0){
-               $rating = $reviews->sum('rating') / count($reviews);
-           }
+             $rating = $reviews->sum('rating') / count($reviews);
+         }
 
-           $course->rating = $rating;
+         $course->rating = $rating;
 
-           return response()->json($course, 200);
-       }
-       else{
+         return response()->json($course, 200);
+     }
+     else{
         return response()->json('Course not found', 404);
     }
 }
@@ -373,13 +373,11 @@ public function create(Request $request){
 
 
     if(isset($request->course_poster_file)){
-        $img = Image::make($poster_file);
-
-        $img->resize(500, null, function ($constraint) {
+        $resized_image = Image::make($poster_file)->resize(500, null, function ($constraint) {
             $constraint->aspectRatio();
-        });
+        })->stream('png', 80);
 
-        $img->save(storage_path('app/schools/'.$school_id.'/course_posters/'.$new_course->course_id.'/'.$poster_file_name), 80);
+        Storage::disk('local')->put('/schools/'.$school_id.'/course_posters/'.$new_course->course_id.'/'.$poster_file_name, $resized_image);
     }
 
     if(isset($request->course_trailer_file)){
