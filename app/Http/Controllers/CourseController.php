@@ -33,6 +33,7 @@ use App\Http\Controllers\Controller;
 use Validator;
 use DB;
 use Image;
+use Storage;
 
 class CourseController extends Controller{
     use ApiResponser;
