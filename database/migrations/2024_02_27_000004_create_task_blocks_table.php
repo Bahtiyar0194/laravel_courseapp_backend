@@ -18,7 +18,7 @@ class CreateTaskBlocksTable extends Migration
             $table->integer('task_block_type_id')->unsigned();
             $table->foreign('task_block_type_id')->references('task_block_type_id')->on('types_of_task_blocks');
             $table->integer('task_id')->unsigned();
-            $table->foreign('task_id')->references('task_id')->on('lesson_tasks')->onDelete('cascade');
+            $table->foreign('task_id')->references('task_id')->on('tasks')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -48,7 +48,7 @@ class CourseController extends Controller{
         ->select(
          'course_categories.course_category_id',
          'course_categories_lang.course_category_name')
-        ->where('languages.lang_tag', $request->header('Accept-Language'))
+        ->where('languages.lang_tag', '=', $request->header('Accept-Language'))
         ->orderBy('course_categories.course_category_id')
         ->get();
 
@@ -57,7 +57,7 @@ class CourseController extends Controller{
             'languages.lang_id',
             'languages_lang.lang_name'
         )
-        ->where('languages_lang.lang_tag', $request->header('Accept-Language'))
+        ->where('languages_lang.lang_tag', '=', $request->header('Accept-Language'))
         ->get();
 
         $levels = CourseLevelType::leftJoin('types_of_course_level_lang', 'types_of_course_level.level_type_id', '=', 'types_of_course_level_lang.level_type_id')
@@ -66,7 +66,7 @@ class CourseController extends Controller{
             'types_of_course_level.level_type_id',
             'types_of_course_level_lang.level_type_name'
         )
-        ->where('languages.lang_tag', $request->header('Accept-Language'))
+        ->where('languages.lang_tag', '=', $request->header('Accept-Language'))
         ->orderBy('types_of_course_level.level_type_id')
         ->get();
 
@@ -99,8 +99,8 @@ class CourseController extends Controller{
 
         $my_courses = Course::leftJoin('course_categories','courses.course_category_id','=','course_categories.course_category_id')
         ->leftJoin('course_categories_lang','course_categories.course_category_id','=','course_categories_lang.course_category_id')
-        ->leftJoin('languages','courses.course_lang_id','=','languages.lang_id')
-        ->leftJoin('languages_lang','languages.lang_id','=','languages_lang.lang_id')
+        ->leftJoin('languages','courses.course_lang_id', '=', 'languages.lang_id')
+        ->leftJoin('languages_lang','languages.lang_id', '=', 'languages_lang.lang_id')
         ->select(
             'courses.course_id',
             'courses.course_name',
@@ -111,10 +111,10 @@ class CourseController extends Controller{
             'course_categories_lang.course_category_name',
             'languages_lang.lang_name'
         )
-        ->where('courses.school_id', auth()->user()->school_id)
-        ->where('courses.show_status_id', 1)
-        ->where('languages_lang.lang_tag', $language->lang_tag)
-        ->where('course_categories_lang.lang_id', $language->lang_id)
+        ->where('courses.school_id', '=', auth()->user()->school_id)
+        ->where('courses.show_status_id', '=', 1)
+        ->where('languages_lang.lang_tag', '=', $language->lang_tag)
+        ->where('course_categories_lang.lang_id', '=', $language->lang_id)
         ->get();
 
         return response()->json($my_courses, 200);
@@ -192,8 +192,16 @@ class CourseController extends Controller{
             ->where('course_id', '=', $request->course_id)
             ->first();
 
+            $requested = CourseRequest::where('initiator_id', '=', auth()->user()->user_id)
+            ->where('course_id', '=', $request->course_id)
+            ->where('status_type_id', '=', 12)
+            ->first();
+
             if(isset($subscribed)){
                 $course->subscribed = true;
+            }
+            elseif(isset($requested)){
+                $course->requested = true;
             }
             else{
                 $course->subscribed = false;
@@ -634,25 +642,41 @@ public function update(Request $request){
     return $this->json('success', 'Course update successful', 200, $edit_course);
 }
 
-public function free_subscribe(Request $request){
+public function subscribe(Request $request){
     $find_course = Course::where('course_id', '=', $request->course_id)
     ->where('school_id', '=', auth()->user()->school_id)
     ->first();
 
     if(isset($find_course)){
         if($find_course->course_cost == 0){
+
+            $mentor = CourseMentor::where('course_id', '=', $find_course->course_id)
+            ->first();
+
             $new_user_course = new UserCourse();
             $new_user_course->operator_id = auth()->user()->user_id;
             $new_user_course->recipient_id = auth()->user()->user_id;
+            $new_user_course->mentor_id = $mentor->mentor_id;
             $new_user_course->course_id = $request->course_id;
             $new_user_course->cost = $find_course->course_cost;
             $new_user_course->subscribe_type_id = 1;
             $new_user_course->save();
 
-            return response()->json('Subscribe success', 200);
+            return response()->json([
+                'subscribe_type' => 'free',
+                'message' => 'Free subscribe success'
+            ], 200);
         }
         else{
-            return response()->json('Access denied', 403);
+            $new_request = new CourseRequest();
+            $new_request->course_id = $request->course_id;
+            $new_request->initiator_id = auth()->user()->user_id;
+            $new_request->save();
+
+            return response()->json([
+                'subscribe_type' => 'request',
+                'message' => 'Request success'
+            ], 200);
         }
     }
     else{
@@ -676,17 +700,19 @@ public function get_subscribers(Request $request){
         ->leftJoin('types_of_course_subscribes','users_courses.subscribe_type_id','=','types_of_course_subscribes.subscribe_type_id')
         ->leftJoin('types_of_course_subscribes_lang','types_of_course_subscribes.subscribe_type_id','=','types_of_course_subscribes_lang.subscribe_type_id')
         ->select(
-            'operator.first_name as operator_first_name',
-            'operator.last_name as operator_last_name',
             'recipient.first_name as recipient_first_name',
             'recipient.last_name as recipient_last_name',
             'mentor.first_name as mentor_first_name',
             'mentor.last_name as mentor_last_name',
+            'operator.first_name as operator_first_name',
+            'operator.last_name as operator_last_name',
             'recipient.user_id',
             'users_courses.id',
             'users_courses.cost',
             'users_courses.created_at',
-            'recipient.avatar',
+            'recipient.avatar as recipient_avatar',
+            'mentor.avatar as mentor_avatar',
+            'operator.avatar as operator_avatar',
             'recipient.email',
             'types_of_course_subscribes_lang.subscribe_type_name'
         )
@@ -694,27 +720,32 @@ public function get_subscribers(Request $request){
         ->where('types_of_course_subscribes_lang.lang_id', $language->lang_id)
         ->orderBy('users_courses.created_at', 'desc');
 
-        $first_name = $request->first_name;
-        $last_name = $request->last_name;
+        $subscriber_fio = $request->subscriber;
         $subscribe_type_id = $request->subscribe_type_id;
         $email = $request->email;
+        $mentor_fio = $request->mentor;
+        $operator_fio = $request->operator;
         $created_at_from = $request->created_at_from;
         $created_at_to = $request->created_at_to;
 
-        if(!empty($first_name)){
-            $subscribers->where('recipient.first_name','LIKE','%'.$first_name.'%');
+        if(!empty($subscriber_fio)){
+            $subscribers->whereRaw("CONCAT(recipient.last_name, ' ', recipient.first_name) LIKE ?", ['%'.$subscriber_fio.'%']);
         }
 
-        if(!empty($last_name)){
-            $subscribers->where('recipient.last_name','LIKE','%'.$last_name.'%');
+        if(!empty($email)){
+            $subscribers->where('recipient.email','LIKE','%'.$email.'%');
         }
 
         if(!empty($subscribe_type_id)){
             $subscribers->where('users_courses.subscribe_type_id','=', $subscribe_type_id);
         }
 
-        if(!empty($email)){
-            $subscribers->where('recipient.email','LIKE','%'.$email.'%');
+        if(!empty($mentor_fio)){
+            $subscribers->whereRaw("CONCAT(mentor.last_name, ' ', mentor.first_name) LIKE ?", ['%'.$mentor_fio.'%']);
+        }
+
+        if(!empty($operator_fio)){
+            $subscribers->whereRaw("CONCAT(operator.last_name, ' ', operator.first_name) LIKE ?", ['%'.$operator_fio.'%']);
         }
 
         if($created_at_from && $created_at_to) {
@@ -916,18 +947,13 @@ public function get_requests(Request $request){
         ->where('types_of_status_lang.lang_id', $language->lang_id)
         ->orderBy('courses_requests.created_at', 'desc');
 
-        $first_name = $request->first_name;
-        $last_name = $request->last_name;
+        $initiator_fio = $request->initiator;
         $email = $request->email;
         $created_at_from = $request->created_at_from;
         $created_at_to = $request->created_at_to;
 
-        if(!empty($first_name)){
-            $requests->where('initiator.first_name','LIKE','%'.$first_name.'%');
-        }
-
-        if(!empty($last_name)){
-            $requests->where('initiator.last_name','LIKE','%'.$last_name.'%');
+        if(!empty($initiator_fio)){
+            $requests->whereRaw("CONCAT(initiator.last_name, ' ', initiator.first_name) LIKE ?", ['%'.$initiator_fio.'%']);
         }
 
         if(!empty($email)){

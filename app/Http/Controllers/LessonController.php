@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\School;
 use App\Models\Lesson;
 use App\Models\LessonView;
-use App\Models\LessonTask;
+use App\Models\Task;
 use App\Models\LessonBlock;
 use App\Models\UserCourse;
 use App\Models\UserRole;
@@ -129,7 +129,7 @@ class LessonController extends Controller{
                 $views_count = count(LessonView::where('lesson_id', '=', $value->lesson_id)->get());
                 $my_lessons[$key]->views_count = $views_count;
 
-                $tasks_count = count(LessonTask::where('lesson_id', '=', $value->lesson_id)->get());
+                $tasks_count = count(Task::where('lesson_id', '=', $value->lesson_id)->get());
                 $my_lessons[$key]->tasks_count = $tasks_count;
             }
             else{

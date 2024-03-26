@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\AuthController;
@@ -48,7 +49,9 @@ Route::group([
             Route::post('/change_mode/{role_type_id}', [AuthController::class, 'change_mode']);
             Route::post('/update', [AuthController::class, 'update']);
             Route::post('/upload_avatar', [AuthController::class, 'upload_avatar']);
+            Route::post('/upload_avatar/{user_id}', [AuthController::class, 'upload_avatar']);
             Route::post('/delete_avatar', [AuthController::class, 'delete_avatar']);
+            Route::post('/delete_avatar/{user_id}', [AuthController::class, 'delete_avatar']);
             Route::post('/change_password', [AuthController::class, 'change_password']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
@@ -69,6 +72,14 @@ Route::group([
             Route::post('/delete_logo/{logo_variable}', [SchoolController::class, 'delete_logo']);
             Route::post('/upload_favicon', [SchoolController::class, 'upload_favicon']);
             Route::post('/delete_favicon', [SchoolController::class, 'delete_favicon']);
+        });
+    });
+
+    Route::group([
+        'prefix' => 'dashboard'
+    ], function ($router) {
+        Route::group(['middleware' => ['auth:sanctum']], function () {
+            Route::get('/get', [DashboardController::class, 'get']);
         });
     });
 
@@ -98,6 +109,7 @@ Route::group([
             Route::post('/get', [UserController::class, 'get_users']);
             Route::get('/get/{user_id}', [UserController::class, 'get_user']);
             Route::get('/get_roles', [UserController::class, 'get_roles']);
+            Route::get('/get_user_attributes', [UserController::class, 'get_user_attributes']);
             Route::post('/invite', [UserController::class, 'invite_user'])->middleware('check_roles'); 
             Route::post('/update/{user_id}', [UserController::class, 'update_user'])->middleware('check_roles');
         });
@@ -152,7 +164,7 @@ Route::group([
             Route::get('/get-courses', [CourseController::class, 'get_courses']);
             Route::get('/my-courses', [CourseController::class, 'my_courses']);
             Route::get('/my-courses/{course_id}', [CourseController::class, 'course']);
-            Route::post('/free_subscribe/{course_id}', [CourseController::class, 'free_subscribe']);
+            Route::post('/subscribe/{course_id}', [CourseController::class, 'subscribe']);
             Route::post('/get_subscribers/{course_id}', [CourseController::class, 'get_subscribers']);
             Route::post('/get_invites/{course_id}', [CourseController::class, 'get_invites']);
             Route::post('/invite_subscriber/{course_id}', [CourseController::class, 'invite_subscriber'])->middleware('check_roles');
@@ -181,12 +193,21 @@ Route::group([
         'prefix' => 'tasks'
     ], function ($router){
         Route::group(['middleware' => ['auth:sanctum']], function () {
-         Route::get('/{task_id}', [TaskController::class, 'get_task']);
-         Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
-         Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
-         Route::post('/create_answer/{task_id}', [TaskController::class, 'create_answer'])->middleware('check_roles');
-         Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
-         Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
-     });
+            Route::get('/get_attributes', [TaskController::class, 'get_attributes']);
+            Route::get('/{task_id}', [TaskController::class, 'get_task']);
+            Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
+            Route::post('/get_typical_tasks', [TaskController::class, 'my_typical_tasks']);
+            Route::post('/get_tests', [TaskController::class, 'my_tests']);
+            Route::post('/get_personal_tasks', [TaskController::class, 'my_personal_tasks']);
+            Route::post('/get_verification_tasks', [TaskController::class, 'my_verification_tasks']);
+            Route::post('/get_completed_tasks', [TaskController::class, 'my_completed_tasks']);
+            Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
+            Route::post('/create_answer/{task_id}', [TaskController::class, 'create_answer'])->middleware('check_roles');
+
+            Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
+            Route::get('/test/get_user_test_result/{task_id}/{executor_id}', [TaskController::class, 'get_test_question']);
+
+            Route::post('/test/save_user_answer/{answer_id}', [TaskController::class, 'save_user_answer']);
+        });
     });
 });

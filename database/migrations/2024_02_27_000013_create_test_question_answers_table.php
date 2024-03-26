@@ -18,7 +18,9 @@ class CreateTestQuestionAnswersTable extends Migration
             $table->string('answer');
             $table->integer('question_id')->unsigned();
             $table->foreign('question_id')->references('question_id')->on('test_questions')->onDelete('cascade');
-            $table->integer('is_correct');
+            $table->integer('is_correct')->nullable();
+            $table->integer('property_id')->unsigned()->nullable();
+            $table->foreign('property_id')->references('property_id')->on('test_properties')->onDelete('cascade');
             $table->timestamps();
         });
     }

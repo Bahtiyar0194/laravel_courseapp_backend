@@ -27,7 +27,7 @@ class UserController extends Controller{
 
         $roles = DB::table('types_of_user_roles')
         ->leftJoin('types_of_user_roles_lang','types_of_user_roles.role_type_id','=','types_of_user_roles_lang.role_type_id')
-        ->where('types_of_user_roles_lang.lang_id', $language->lang_id)
+        ->where('types_of_user_roles_lang.lang_id', '=', $language->lang_id)
         ->where('types_of_user_roles.role_type_id', '!=', 1)
         ->select(
             'types_of_user_roles.role_type_id',
@@ -38,13 +38,47 @@ class UserController extends Controller{
         return response()->json($roles, 200);
     }
 
+    public function get_user_attributes(Request $request){
+        $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
+
+        $statuses = DB::table('users')
+        ->leftJoin('types_of_status', 'users.status_type_id','=','types_of_status.status_type_id')
+        ->leftJoin('types_of_status_lang','types_of_status.status_type_id', '=', 'types_of_status_lang.status_type_id')
+        ->where('types_of_status_lang.lang_id', '=', $language->lang_id)
+        ->select(
+            'users.status_type_id',
+            'types_of_status_lang.status_type_name'
+        )
+        ->groupBy('users.status_type_id')
+        ->get();
+
+        $roles = DB::table('types_of_user_roles')
+        ->leftJoin('types_of_user_roles_lang','types_of_user_roles.role_type_id','=','types_of_user_roles_lang.role_type_id')
+        ->where('types_of_user_roles_lang.lang_id', '=', $language->lang_id)
+        ->where('types_of_user_roles.role_type_id', '!=', 1)
+        ->select(
+            'types_of_user_roles.role_type_id',
+            'types_of_user_roles_lang.user_role_type_name'
+        )
+        ->get();
+
+        $attributes = new \stdClass();
+
+        $attributes->user_statuses = $statuses;
+        $attributes->user_roles = $roles;
+
+        return response()->json($attributes, 200);
+    }
+
     public function get_users(Request $request){
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
+        $auth_user = auth()->user();
+
         $per_page = $request->per_page ? $request->per_page : 10;
 
-        $users = User::leftJoin('types_of_status','users.status_type_id','=','types_of_status.status_type_id')
-        ->leftJoin('types_of_status_lang','types_of_status.status_type_id','=','types_of_status_lang.status_type_id')
+        $users = User::leftJoin('types_of_status','users.status_type_id', '=','types_of_status.status_type_id')
+        ->leftJoin('types_of_status_lang','types_of_status.status_type_id', '=','types_of_status_lang.status_type_id')
         ->select(
             'users.user_id',
             'users.first_name',
@@ -56,22 +90,23 @@ class UserController extends Controller{
             'types_of_status_lang.status_type_name'
         )
         ->where('users.school_id', '=', auth()->user()->school_id)
-        ->where('types_of_status_lang.lang_id', $language->lang_id)
+        ->where('types_of_status_lang.lang_id', '=', $language->lang_id)
         ->orderBy('users.created_at', 'desc');
 
-        $first_name = $request->first_name;
-        $last_name = $request->last_name;
+        // if($auth_user->current_role_id == 2){
+        //     $users->where('executor.school_id', '=', auth()->user()->school_id);
+        // }
+
+        $user_fio = $request->user;
         $email = $request->email;
         $phone = $request->phone;
+        $status_type_id = $request->status_type_id;
+        $role_type_id = $request->role_type_id;
         $created_at_from = $request->created_at_from;
         $created_at_to = $request->created_at_to;
 
-        if(!empty($first_name)){
-            $users->where('users.first_name','LIKE','%'.$first_name.'%');
-        }
-
-        if(!empty($last_name)){
-            $users->where('users.last_name','LIKE','%'.$last_name.'%');
+        if(!empty($user_fio)){
+            $users->whereRaw("CONCAT(users.last_name, ' ', users.first_name) LIKE ?", ['%'.$user_fio.'%']);
         }
 
         if(!empty($email)){
@@ -80,6 +115,15 @@ class UserController extends Controller{
 
         if(!empty($phone)){
             $users->where('users.phone','LIKE','%'.$phone.'%');
+        }
+
+        if(!empty($status_type_id)){
+            $users->where('users.status_type_id','=', $status_type_id);
+        }
+
+        if(!empty($role_type_id)){
+            $users->leftJoin('users_roles','users.user_id','=','users_roles.user_id')
+            ->where('users_roles.role_type_id','=', $role_type_id);
         }
 
         if($created_at_from && $created_at_to) {
@@ -107,14 +151,16 @@ class UserController extends Controller{
         $language = Language::where('lang_tag', '=', $request->header('Accept-Language'))->first();
 
         $roles = DB::table('types_of_user_roles')
-        ->leftJoin('types_of_user_roles_lang','types_of_user_roles.role_type_id','=','types_of_user_roles_lang.role_type_id')
-        ->where('types_of_user_roles_lang.lang_id', $language->lang_id)
+        ->leftJoin('types_of_user_roles_lang','types_of_user_roles.role_type_id', '=', 'types_of_user_roles_lang.role_type_id')
+        ->where('types_of_user_roles_lang.lang_id', '=', $language->lang_id)
         ->where('types_of_user_roles.role_type_id', '!=', 1)
         ->select(
             'types_of_user_roles.role_type_id',
             'types_of_user_roles_lang.user_role_type_name'
         )
         ->get();
+
+        $available_roles = [];
 
         foreach ($roles as $key => $role) {
             $find_user_role = UserRole::where('role_type_id', '=', $role->role_type_id)
@@ -123,13 +169,22 @@ class UserController extends Controller{
 
             if(isset($find_user_role)){
                 $roles[$key]->selected = true;
+                array_push($available_roles, $role);
             }
             else{
                 $roles[$key]->selected = false;
             }
         }
 
+        foreach ($roles as $key => $role) {
+            if($role->role_type_id == $user->current_role_id){
+                $user->current_role_name = $role->user_role_type_name;
+                break;
+            }
+        }
+
         $user->roles = $roles;
+        $user->available_roles = $available_roles;
 
         return response()->json($user, 200);
     }

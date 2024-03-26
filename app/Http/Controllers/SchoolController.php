@@ -45,6 +45,13 @@ class SchoolController extends Controller{
         $school->body_font_class = Font::where('font_id', '=', $school->body_font_id)->first()->font_class.'_body';
         $school->color_scheme_class = Color::where('color_id', '=', $school->color_id)->first()->color_class;
 
+        if(time() >= strtotime($school->subscription_expiration_at)){
+            $school->subscription_expired = true;
+        }
+        else{
+            $school->subscription_expired = false;
+        };
+
         $colors = Color::where('show_status_id', '=', 1)->orderBy('color_name')->get();
         $fonts = Font::where('show_status_id', '=', 1)->orderBy('font_name')->get();
         $themes = Theme::where('show_status_id', '=', 1)->get();
@@ -95,6 +102,13 @@ class SchoolController extends Controller{
             $set_school->old_body_font_class = Font::where('font_id', '=', $old_body_font_id)->first()->font_class.'_body';
             $set_school->new_color_scheme_class = Color::where('color_id', '=', $request->color_id)->first()->color_class;
             $set_school->old_color_scheme_class = Color::where('color_id', '=', $old_color_id)->first()->color_class;
+
+            if(time() >= strtotime($set_school->subscription_expiration_at)){
+                $set_school->subscription_expired = true;
+            }
+            else{
+                $set_school->subscription_expired = false;
+            };
         }
 
         return response()->json($set_school, 200);
@@ -131,6 +145,13 @@ class SchoolController extends Controller{
         $school->telegram = $request->telegram;
         $school->youtube = $request->youtube;
         $school->save();
+
+        if(time() >= strtotime($school->subscription_expiration_at)){
+            $school->subscription_expired = true;
+        }
+        else{
+            $school->subscription_expired = false;
+        };
 
         return response()->json([
             'school' => $school
@@ -257,7 +278,7 @@ class SchoolController extends Controller{
         ->first()->max_file_size_mb;
 
         $validator = Validator::make($request->all(), [
-            'favicon_file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size.'|dimensions:width=192,height=192'
+            'favicon_file' => 'required|file|mimes:jpg,jpeg,png,gif,svg,webp|max_mb:'.$max_image_file_size.'|dimensions:width=512,height=512'
         ]);
 
         if($validator->fails()){

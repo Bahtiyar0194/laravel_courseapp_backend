@@ -496,7 +496,14 @@ public function upload_avatar(Request $request){
         return response()->json($validator->errors(), 422);
     }
 
-    $user = auth()->user();
+    if(isset($request->user_id)){
+        $user = User::where('user_id', '=', $request->user_id)
+        ->where('school_id', '=', auth()->user()->school_id)
+        ->first();
+    }
+    else{
+        $user = auth()->user();
+    }
 
     if(isset($user->avatar)){
         $path = storage_path('/app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$user->avatar);
@@ -505,10 +512,6 @@ public function upload_avatar(Request $request){
 
     $file = $request->file('image_file');
     $file_target = $file->hashName();
-
-    // $img = Image::make($file)->resize(300, null, function ($constraint) {
-    //     $constraint->aspectRatio();
-    // })->stream('png', 20)->save(storage_path('app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$file_target));
 
     $resized_image = Image::make($file)->resize(300, null, function ($constraint) {
         $constraint->aspectRatio();
@@ -525,7 +528,14 @@ public function upload_avatar(Request $request){
 }
 
 public function delete_avatar(Request $request){
-    $user = auth()->user();
+    if(isset($request->user_id)){
+        $user = User::where('user_id', '=', $request->user_id)
+        ->where('school_id', '=', auth()->user()->school_id)
+        ->first();
+    }
+    else{
+        $user = auth()->user();
+    }
 
     if(isset($user->avatar)){
         $path = storage_path('/app/schools/'.$user->school_id.'/avatars/'.$user->user_id.'/'.$user->avatar);

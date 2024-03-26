@@ -15,7 +15,7 @@ class CreateCompletedTasksTable extends Migration
         Schema::create('completed_tasks', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('task_id')->unsigned();
-            $table->foreign('task_id')->references('task_id')->on('lesson_tasks')->onDelete('cascade');
+            $table->foreign('task_id')->references('task_id')->on('tasks')->onDelete('cascade');
             $table->integer('executor_id')->unsigned();
             $table->foreign('executor_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->integer('inspector_id')->unsigned()->nullable();
@@ -23,7 +23,6 @@ class CreateCompletedTasksTable extends Migration
             $table->integer('status_type_id')->default(8)->unsigned();
             $table->foreign('status_type_id')->references('status_type_id')->on('types_of_status');
             $table->text('answer')->nullable();
-            $table->integer('grade')->nullable();
             $table->timestamps();
         });
     }

@@ -66,6 +66,13 @@ class CheckSubdomain
                 $school->favicons = FaviconType::get();
                 $school->manifest_icons = $manifest_icons;
 
+                if(time() >= strtotime($school->subscription_expiration_at)){
+                    $school->subscription_expired = true;
+                }
+                else{
+                    $school->subscription_expired = false;
+                };
+
                 return response()->json($school, 200);
             }
             else{
