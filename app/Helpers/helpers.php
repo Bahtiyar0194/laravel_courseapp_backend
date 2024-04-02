@@ -20,6 +20,14 @@ use App\Models\TestQuestionImage;
 use App\Models\TestQuestionAudio;
 use App\Models\TestQuestionCode;
 
+use App\Models\TaskAnswerBlock;
+use App\Models\TaskAnswerText;
+use App\Models\TaskAnswerTable;
+use App\Models\TaskAnswerCode;
+use App\Models\TaskAnswerImage;
+use App\Models\TaskAnswerVideo;
+use App\Models\TaskAnswerAudio;
+
 use App\Models\SubscriptionPlan;
 use App\Models\MediaFile;
 use App\Models\School;
@@ -32,7 +40,7 @@ use App\Models\School;
 // 		if(count($parts) >= 2){
 // 			return ['subdomain' => $parts[0]];
 // 		}
-		
+
 // 		return false;
 // 	}
 // }
@@ -162,6 +170,7 @@ if (!function_exists('create_blocks')){
 					$new_lesson_code->save();
 				}
 			}
+
 			elseif($operation_type == 'task') {
 				$new_task_block = new TaskBlock();
 
@@ -235,6 +244,82 @@ if (!function_exists('create_blocks')){
 					$new_task_code->code_language = $block->code_language;
 					$new_task_code->code_theme = $block->code_theme;
 					$new_task_code->save();
+				}
+			}
+
+			elseif($operation_type == 'task_answer') {
+				$new_task_answer_block = new TaskAnswerBlock();
+
+				if($block_type == 'text'){
+					$new_task_answer_block->task_answer_block_type_id = 1;
+				}
+
+				if($block_type == 'video'){
+					$new_task_answer_block->task_answer_block_type_id = 2;
+				}
+
+				if($block_type == 'audio'){
+					$new_task_answer_block->task_answer_block_type_id = 3;
+				}
+
+				if($block_type == 'image'){
+					$new_task_answer_block->task_answer_block_type_id = 4;
+				}
+
+				if($block_type == 'table'){
+					$new_task_answer_block->task_answer_block_type_id = 5;
+				}
+
+				if($block_type == 'code'){
+					$new_task_answer_block->task_answer_block_type_id = 6;
+				}
+
+				$new_task_answer_block->completed_task_id = $target_id;
+				$new_task_answer_block->save();
+
+				if($block_type == 'text'){
+					$new_task_answer_text = new TaskAnswerText();
+					$new_task_answer_text->task_answer_block_id = $new_task_answer_block->task_answer_block_id;
+					$new_task_answer_text->content = $block->content;
+					$new_task_answer_text->save();
+				}
+
+				if($block_type == 'image'){
+					$new_task_answer_image = new TaskAnswerImage();
+					$new_task_answer_image->task_answer_block_id = $new_task_answer_block->task_answer_block_id;
+					$new_task_answer_image->file_id = $block->file_id;
+					$new_task_answer_image->image_width = $block->image_width;
+					$new_task_answer_image->save();
+				}
+
+				if($block_type == 'video'){
+					$new_task_answer_video = new TaskAnswerVideo();
+					$new_task_answer_video->task_answer_block_id = $new_task_answer_block->task_answer_block_id;
+					$new_task_answer_video->file_id = $block->file_id;
+					$new_task_answer_video->save();
+				}
+
+				if($block_type == 'audio'){
+					$new_task_answer_audio = new TaskAnswerAudio();
+					$new_task_answer_audio->task_answer_block_id = $new_task_answer_block->task_answer_block_id;
+					$new_task_answer_audio->file_id = $block->file_id;
+					$new_task_answer_audio->save();
+				}
+
+				if($block_type == 'table'){
+					$new_task_answer_table = new TaskAnswerTable();
+					$new_task_answer_table->task_answer_block_id = $new_task_answer_block->task_answer_block_id;
+					$new_task_answer_table->content = str_replace(' contenteditable="true"', '', $block->content);
+					$new_task_answer_table->save();
+				}
+
+				if($block_type == 'code'){
+					$new_task_answer_code = new TaskAnswerCode();
+					$new_task_answer_code->task_answer_block_id = $new_task_answer_block->task_answer_block_id;
+					$new_task_answer_code->code = $block->code;
+					$new_task_answer_code->code_language = $block->code_language;
+					$new_task_answer_code->code_theme = $block->code_theme;
+					$new_task_answer_code->save();
 				}
 			}
 		}
@@ -353,6 +438,7 @@ if (!function_exists('get_blocks')){
 				}
 			}
 		}
+
 		elseif($operation_type == 'task'){
 			$task_blocks = TaskBlock::where('task_id', $target_id)->get();
 

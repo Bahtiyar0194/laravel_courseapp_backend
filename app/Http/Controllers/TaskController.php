@@ -562,7 +562,7 @@ class TaskController extends Controller{
     }
 
 
-    public function create_answer(Request $request){
+    public function create_task_answer(Request $request){
 
         $validator = Validator::make($request->all(), [
             'task_answer' => 'required|string|between:3, 3000',
@@ -573,11 +573,35 @@ class TaskController extends Controller{
             return $this->json('error', 'Task answer create error', 422, $validator->errors());
         }
 
-        $completed_task = new CompletedTask();
-        $completed_task->task_id = $request->task_id;
-        $completed_task->executor_id = auth()->user()->user_id;
-        $completed_task->answer = $request->task_answer;
-        $completed_task->save();
+        $completed_task = CompletedTask::where('task_id', '=', $request->task_id)
+        ->where('executor_id', '=', auth()->user()->user_id)
+        ->first();
+
+        $mentor = Task::leftJoin('lessons', 'tasks.lesson_id', '=', 'lessons.lesson_id')
+        ->leftJoin('courses', 'lessons.course_id', '=', 'courses.course_id')
+        ->leftJoin('users_courses','courses.course_id','=','users_courses.course_id')
+        ->where('users_courses.recipient_id', '=', auth()->user()->user_id)
+        ->select(
+            'users_courses.mentor_id'
+        )->first();
+
+
+        if(!isset($completed_task)){
+            $new_completed_task = new CompletedTask();
+            $new_completed_task->task_id = $request->task_id;
+            $new_completed_task->executor_id = auth()->user()->user_id;
+            $new_completed_task->inspector_id = $mentor->mentor_id;
+            $new_completed_task->save();
+
+            if(isset($request->task_answer_blocks)){
+                create_blocks($new_completed_task->id, json_decode($request->task_answer_blocks), 'task_answer');
+            }
+
+            $user_operation = new UserOperation();
+            $user_operation->operator_id = auth()->user()->user_id;
+            $user_operation->operation_type_id = 19;
+            $user_operation->save();
+        }
 
         return $this->json('success', 'Task answer create success', 200, 'success');
     }
@@ -758,6 +782,11 @@ class TaskController extends Controller{
                         $new_completed_task->inspector_id = $mentor->mentor_id;
                         $new_completed_task->status_type_id = 10;
                         $new_completed_task->save();
+
+                        $user_operation = new UserOperation();
+                        $user_operation->operator_id = auth()->user()->user_id;
+                        $user_operation->operation_type_id = 19;
+                        $user_operation->save();
                     }
                 }
 

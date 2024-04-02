@@ -202,7 +202,7 @@ Route::group([
             Route::post('/get_verification_tasks', [TaskController::class, 'my_verification_tasks']);
             Route::post('/get_completed_tasks', [TaskController::class, 'my_completed_tasks']);
             Route::post('/create/{lesson_id}', [TaskController::class, 'create'])->middleware('check_roles');
-            Route::post('/create_answer/{task_id}', [TaskController::class, 'create_answer'])->middleware('check_roles');
+            Route::post('/create_answer/{task_id}', [TaskController::class, 'create_task_answer'])->middleware('check_roles');
 
             Route::get('/test/get_test_question/{task_id}', [TaskController::class, 'get_test_question']);
             Route::get('/test/get_user_test_result/{task_id}/{executor_id}', [TaskController::class, 'get_test_question']);
