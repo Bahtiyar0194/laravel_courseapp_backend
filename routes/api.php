@@ -179,15 +179,15 @@ Route::group([
     Route::group([
         'prefix' => 'lessons'
     ], function ($router){
-     Route::group(['middleware' => ['auth:sanctum']], function () {
-         Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
-         Route::post('/update/{lesson_id}', [LessonController::class, 'edit'])->middleware('check_roles');
-         Route::post('/delete/{lesson_id}', [LessonController::class, 'delete'])->middleware('check_roles');
-         Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
-         Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
-         Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
-     });
- });
+       Route::group(['middleware' => ['auth:sanctum']], function () {
+           Route::post('/create', [LessonController::class, 'create'])->middleware('check_roles');
+           Route::post('/update/{lesson_id}', [LessonController::class, 'edit'])->middleware('check_roles');
+           Route::post('/delete/{lesson_id}', [LessonController::class, 'delete'])->middleware('check_roles');
+           Route::get('/my-lessons/{course_id}', [LessonController::class, 'my_lessons']);
+           Route::get('/{lesson_id}', [LessonController::class, 'get_lesson']);
+           Route::post('/set_order', [LessonController::class, 'set_order'])->middleware('check_roles');
+       });
+   });
 
     Route::group([
         'prefix' => 'tasks'
@@ -195,6 +195,7 @@ Route::group([
         Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/get_attributes', [TaskController::class, 'get_attributes']);
             Route::get('/{task_id}', [TaskController::class, 'get_task']);
+            Route::get('get_user_task_answer/{task_id}/{executor_id}', [TaskController::class, 'get_task']);
             Route::get('/my-tasks/{lesson_id}', [TaskController::class, 'my_tasks']);
             Route::post('/get_typical_tasks', [TaskController::class, 'my_typical_tasks']);
             Route::post('/get_tests', [TaskController::class, 'my_tests']);

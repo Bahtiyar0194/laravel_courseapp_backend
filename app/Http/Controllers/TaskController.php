@@ -35,6 +35,16 @@ class TaskController extends Controller{
     }
 
     public function get_task(Request $request){
+
+        if(isset($request->executor_id)){
+            $executor_id = $request->executor_id;
+            $executor = User::find($executor_id);
+        }
+        else{
+            $executor_id = auth()->user()->user_id;
+            $executor = auth()->user();
+        }
+
         $find_task = Task::leftJoin('lessons','lessons.lesson_id','=','tasks.lesson_id')
         ->leftJoin('courses','courses.course_id','=','lessons.course_id')
         ->select(
@@ -53,9 +63,19 @@ class TaskController extends Controller{
 
         if(isset($find_task)){
 
-            if($find_task->task_type_id != 1){
+            if($find_task->task_type_id == 2 || $find_task->task_type_id == 3){
                 //App/Helpers
                 $find_task->task_blocks = get_blocks($find_task->task_id, 'task');
+
+                $completed_task = CompletedTask::where('task_id', '=', $find_task->task_id)
+                ->where('executor_id', '=', $executor_id)
+                ->first();
+
+                if(isset($completed_task)){
+                    $find_task->executor = $executor;
+                    $find_task->completed_task = $completed_task;
+                    $find_task->task_answer_blocks = get_blocks($completed_task->id, 'task_answer');
+                }
             }
 
             return response()->json($find_task, 200);
@@ -302,6 +322,7 @@ class TaskController extends Controller{
             'tasks.task_type_id',
             'types_of_tasks.task_type_slug',
             'types_of_tasks_lang.task_type_name',
+            'executor.user_id as executor_id',
             'executor.first_name as executor_first_name',
             'executor.last_name as executor_last_name',
             'executor.avatar as executor_avatar',
@@ -759,7 +780,7 @@ class TaskController extends Controller{
                         'progress' => $progress,
                         'correct_answers_count' => $correct_answers_count,
                         'analytic_test_result' => $analytic_test_result,
-                        'executor' => $executor->last_name.' '.$executor->first_name
+                        'executor' => $executor
                     ];
 
                     $completed_task = CompletedTask::where('task_id', '=', $request->task_id)

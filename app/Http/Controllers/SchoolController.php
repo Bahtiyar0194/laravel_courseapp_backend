@@ -289,7 +289,6 @@ class SchoolController extends Controller{
 
         $path = storage_path('/app/schools/'.$school->school_id.'/favicons');
         File::deleteDirectory($path);
-        //File::makeDirectory($path);
 
         $file = $request->file('favicon_file');
 

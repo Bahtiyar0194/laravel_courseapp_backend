@@ -549,6 +549,116 @@ if (!function_exists('get_blocks')){
 			}
 		}
 
+		elseif($operation_type == 'task_answer'){
+			$task_answer_blocks = TaskAnswerBlock::where('completed_task_id', $target_id)->get();
+
+			foreach ($task_answer_blocks as $key => $task_answer_block) {
+
+				if($task_answer_block->task_answer_block_type_id == 1){
+					$text = TaskAnswerText::where('task_answer_block_id', $task_answer_block->task_answer_block_id)
+					->first();
+					if(isset($text)){
+						$text_block = [
+							'block_id' => $key + 1,
+							'block_type_id' => $task_answer_block->task_answer_block_type_id,
+							'content' => $text->content
+						];
+						array_push($blocks, $text_block);
+					}
+				}
+
+				if($task_answer_block->task_answer_block_type_id == 2){
+					$video = TaskAnswerVideo::leftJoin('media_files','task_answer_videos.file_id','=','media_files.file_id')
+					->where('task_answer_videos.task_answer_block_id', $task_answer_block->task_answer_block_id)
+					->select(
+						'media_files.file_type_id',
+						'media_files.file_name',
+						'media_files.file_id'
+					)
+					->first();
+					if(isset($video)){
+						$video_block = [
+							'block_id' => $key + 1,
+							'file_type_id' => $video->file_type_id,
+							'file_id' => $video->file_id,
+							'file_name' => $video->file_name
+						];
+						array_push($blocks, $video_block);
+					}
+				}
+
+				if($task_answer_block->task_answer_block_type_id == 3){
+					$audio = TaskAnswerAudio::leftJoin('media_files','task_answer_audios.file_id','=','media_files.file_id')
+					->where('task_answer_audios.task_answer_block_id', $task_answer_block->task_answer_block_id)
+					->select(
+						'media_files.file_type_id',
+						'media_files.file_name',
+						'media_files.file_id'
+					)
+					->first();
+					if(isset($audio)){
+						$audio_block = [
+							'block_id' => $key + 1,
+							'file_type_id' => $audio->file_type_id,
+							'file_id' => $audio->file_id,
+							'file_name' => $audio->file_name,
+						];
+						array_push($blocks, $audio_block);
+					}
+				}
+
+				if($task_answer_block->task_answer_block_type_id == 4){
+					$image = TaskAnswerImage::leftJoin('media_files','task_answer_images.file_id','=','media_files.file_id')
+					->where('task_answer_images.task_answer_block_id', $task_answer_block->task_answer_block_id)
+					->select(
+						'media_files.file_type_id',
+						'media_files.file_name',
+						'media_files.file_id',
+						'task_answer_images.image_width'
+					)
+					->first();
+					if(isset($image)){
+						$image_block = [
+							'block_id' => $key + 1,
+							'file_type_id' => $image->file_type_id,
+							'file_id' => $image->file_id,
+							'file_name' => $image->file_name,
+							'image_width' => $image->image_width
+						];
+						array_push($blocks, $image_block);
+					}
+				}
+
+				if($task_answer_block->task_answer_block_type_id == 5){
+					$table = TaskAnswerTable::where('task_answer_block_id', $task_answer_block->task_answer_block_id)
+					->first();
+					if(isset($table)){
+						$table_block = [
+							'block_id' => $key + 1,
+							'block_type_id' => $task_answer_block->task_answer_block_type_id,
+							'content' => $table->content
+						];
+						array_push($blocks, $table_block);
+					}
+				}
+
+				if($task_answer_block->task_answer_block_type_id == 6){
+					$code = TaskAnswerCode::where('task_answer_block_id', $task_answer_block->task_answer_block_id)
+					->first();
+					if(isset($code)){
+						$code_block = [
+							'block_id' => $key + 1,
+							'block_type_id' => $task_answer_block->task_answer_block_type_id,
+							'code' => $code->code,
+							'code_language' => $code->code_language,
+							'code_theme' => $code->code_theme
+						];
+						array_push($blocks, $code_block);
+					}
+				}
+			}
+		}
+
 		return $blocks;
 	}
 }  
